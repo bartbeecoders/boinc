@@ -6,6 +6,29 @@ all-features = true
 
 [advisories]
 yanked = "deny"
+ignore = [
+    # GTK3 bindings are unmaintained upstream but required by tray-icon on
+    # Linux. Revisit when tray-icon gains a GTK4/ksni backend.
+    "RUSTSEC-2024-0412",
+    "RUSTSEC-2024-0413",
+    "RUSTSEC-2024-0415",
+    "RUSTSEC-2024-0416",
+    "RUSTSEC-2024-0418",
+    "RUSTSEC-2024-0419",
+    "RUSTSEC-2024-0420",
+    # Unmaintained transitive deps pinned by floem 0.2 / tray-icon; nothing
+    # we can bump directly. Revisit on the next floem upgrade.
+    "RUSTSEC-2024-0370", # proc-macro-error
+    "RUSTSEC-2024-0436", # paste
+    "RUSTSEC-2026-0192",
+    "RUSTSEC-2026-0206",
+    # DoS-class parser vulnerabilities (quadratic HTML attribute check,
+    # quick-xml NsReader allocation) in floem's asset-parsing tree. These
+    # parse our own bundled assets, not untrusted input. Revisit on the
+    # next floem upgrade.
+    "RUSTSEC-2026-0194",
+    "RUSTSEC-2026-0195",
+]
 
 [licenses]
 allow = [
