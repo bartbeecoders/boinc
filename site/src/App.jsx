@@ -1,6 +1,7 @@
 import Demo from "./components/Demo.jsx";
 import Downloads from "./components/Downloads.jsx";
 import Faq from "./components/Faq.jsx";
+import LinuxSetup from "./components/LinuxSetup.jsx";
 import {
   OS_LABEL,
   PRIMARY_ASSET,
@@ -27,6 +28,7 @@ export default function App() {
         <div className="nav-links">
           <a href="#how">How it works</a>
           <a href="#downloads">Downloads</a>
+          <a href="#linux-setup">Linux setup</a>
           <a href="#faq">FAQ</a>
           <a href={REPO_URL}>GitHub</a>
         </div>
@@ -137,6 +139,7 @@ export default function App() {
         </section>
 
         <Downloads os={os} release={release} />
+        <LinuxSetup />
         <Faq />
       </main>
 

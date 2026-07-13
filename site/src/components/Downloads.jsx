@@ -29,7 +29,8 @@ export default function Downloads({ os, release }) {
       </div>
       <p className="aside">
         After installing, open Boinc once — it sets up the right-click menu for your user
-        account. <code>boinc integrate uninstall</code> removes it just as cleanly.
+        account. <code>boinc integrate uninstall</code> removes it just as cleanly. On
+        Linux, see the <a href="#linux-setup">distro-by-distro setup guide</a> below.
       </p>
     </section>
   );
