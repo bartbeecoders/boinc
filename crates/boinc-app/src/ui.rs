@@ -88,7 +88,7 @@ pub fn main_view(
         let ctx = ctx.clone();
         h_stack((
             label(|| "Boinc").style(|s| s.font_size(20.0).font_bold()),
-            empty().style(|s| s.flex_grow(1.0)),
+            empty().style(|s| s.flex_grow(1.0_f32)),
             button("Settings").action(move || open_settings(ctx.clone())),
         ))
         .style(|s| s.items_center().width_full())
@@ -125,7 +125,7 @@ pub fn main_view(
         )
         .style(|s| s.flex_col().width_full().gap(4.0)),
     )
-    .style(|s| s.width_full().flex_grow(1.0));
+    .style(|s| s.width_full().flex_grow(1.0_f32));
 
     v_stack((header, drop_zone, picks_list, jobs_list))
         .style(|s| {
@@ -175,14 +175,14 @@ fn pick_row(ctx: AppCtx, picks: RwSignal<Vec<PendingPick>>, pick: PendingPick) -
         Some(message) => h_stack((
             label(move || name.clone()),
             label(move || message.clone()).style(|s| s.color(Color::rgb8(0xc0, 0x30, 0x30))),
-            empty().style(|s| s.flex_grow(1.0)),
+            empty().style(|s| s.flex_grow(1.0_f32)),
             dismiss,
         ))
         .into_any(),
         None => h_stack((
             label(move || name.clone()),
             targets,
-            empty().style(|s| s.flex_grow(1.0)),
+            empty().style(|s| s.flex_grow(1.0_f32)),
             dismiss,
         ))
         .into_any(),
@@ -219,7 +219,7 @@ fn job_row(ctx: AppCtx, job: JobView) -> impl IntoView {
 
     h_stack((
         label(move || name.clone()),
-        empty().style(|s| s.flex_grow(1.0)),
+        empty().style(|s| s.flex_grow(1.0_f32)),
         status,
     ))
     .style(|s| s.items_center().width_full().gap(8.0))

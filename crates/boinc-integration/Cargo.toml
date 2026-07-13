@@ -4,6 +4,8 @@ description = "Per-platform install/uninstall of context-menu and service hooks"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 boinc-core.workspace = true
