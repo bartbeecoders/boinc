@@ -25,7 +25,7 @@ cargo fmt --all                                      # format
 cargo deny check                                     # license/advisory audit (needs cargo-deny installed; CI runs it)
 cargo run -p boinc-cli                               # run the CLI (binary is named `boinc`)
 cargo run -p boinc-app                               # run the tray app
-scripts/dev.sh                                       # same, from anywhere; extra args go to the app
+scripts/dev.sh                                       # tray app + portal dev server together; extra args go to the app
 ```
 
 CI (`.github/workflows/ci.yml`) runs fmt/clippy/build/test on Linux, Windows, and macOS — clippy warnings are errors there.
