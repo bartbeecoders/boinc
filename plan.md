@@ -115,7 +115,7 @@ Source spec: `Vibecoding/Instructions.md`
 
 **Goal: landing page with downloads.**
 
-- [x] 6.1 Landing page (`site/`, static HTML/CSS/JS, no build step): hero is an interactive recreation of the context menu (click "Convert to JPG" and the demo file converts, with an undo toast that converts it back); real app screenshot; verified via headless-Chrome screenshots at desktop + mobile widths, light + dark
+- [x] 6.1 Landing page (`site/`, React 19 + Vite; originally static, converted on request): hero is an interactive recreation of the context menu (click "Convert to JPG" and the demo file converts, with an undo toast that converts it back); real app screenshot; verified via headless-Chrome screenshots at desktop + mobile widths, light + dark
 - [x] 6.2 Download section: per-OS detection highlights the visitor's cards and retargets the primary button; asset links resolved client-side from the GitHub releases API (so releases don't require a site redeploy), with the releases page as no-JS fallback
 - [x] 6.3 Deploy pipeline: `deploy-site.yml` → Cloudflare Pages on `site/**` changes; full runbook incl. DNS (`CNAME boinc → boinc-portal.pages.dev`) in `Vibecoding/deploy.md`. **Not yet live — needs the one-time wrangler/DNS setup and CI secrets (owner action)**
 - [x] 6.4 Docs on-page: numbered how-it-works, per-OS install one-liners, FAQ (uploads, LibreOffice requirement, overwrite policy, batch, license)

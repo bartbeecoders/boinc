@@ -27,3 +27,6 @@ Conversion system needs to be easily extensible to add new conversion formats.
 - should be able to be installed as a OS extension
 
 Create a detailed plan (save in plan.md) with phases and tasks.
+
+
+Convert the Boinc website to react/vite

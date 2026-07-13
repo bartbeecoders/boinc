@@ -1,9 +1,10 @@
 # Deploying the Boinc portal (boinc.hideterms.com)
 
-The portal is a static site in `site/` (plain HTML/CSS/JS, no build step).
-Hosting target: Cloudflare Pages. Deploys run automatically from GitHub
-Actions (`.github/workflows/deploy-site.yml`) on every push to `main` that
-touches `site/`.
+The portal is a React + Vite app in `site/` (`npm run dev` to work on it,
+`npm run build` → static output in `site/dist`). Hosting target: Cloudflare
+Pages. Deploys run automatically from GitHub Actions
+(`.github/workflows/deploy-site.yml`) on every push to `main` that touches
+`site/`: CI builds the app and uploads `site/dist`.
 
 ## One-time setup
 
@@ -12,7 +13,8 @@ touches `site/`.
    ```sh
    npx wrangler login                # once
    npx wrangler pages project create boinc-portal --production-branch=main
-   npx wrangler pages deploy site --project-name=boinc-portal   # first deploy
+   cd site && npm ci && npm run build
+   npx wrangler pages deploy site/dist --project-name=boinc-portal   # first deploy
    ```
 
 2. **Custom domain.** In the Cloudflare dashboard: Pages → boinc-portal →
@@ -42,5 +44,6 @@ page.
 ## Manual deploy
 
 ```sh
-npx wrangler pages deploy site --project-name=boinc-portal
+cd site && npm ci && npm run build
+npx wrangler pages deploy site/dist --project-name=boinc-portal
 ```
