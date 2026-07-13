@@ -20,7 +20,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libxkbcommon-dev libxdo-dev
+        # libreoffice-writer makes the DOCX<->PDF round-trip test run for
+        # real on Linux (it self-skips where soffice is absent).
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libxkbcommon-dev libxdo-dev libreoffice-writer --no-install-recommends
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy

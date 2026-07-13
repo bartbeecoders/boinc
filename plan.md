@@ -42,8 +42,8 @@ Source spec: `Vibecoding/Instructions.md`
 - [x] 1.4 Format detection from file extension + magic bytes (don't trust extension alone)
 - [x] 1.5 Output-path policy: default to same directory with new extension, never overwrite silently (append ` (1)` etc.), configurable
 - [x] 1.6 Implement **PNG → JPG** and **JPG → PNG** using the `image` crate (options: JPEG quality, background color for alpha flattening)
-- [x] 1.7 Implement **DOCX → PDF** — **decided:** delegate to headless LibreOffice (`soffice --headless --convert-to`, throwaway user profile per run); converter reports unavailable when soffice is missing (lookup: `BOINC_SOFFICE` env → PATH → known install paths)
-- [x] 1.8 Implement **PDF → DOCX** — **decided:** same LibreOffice backend with `--infilter=writer_pdf_import`; output is draw-frame text (lossy), acceptable for v1 per risk #1
+- [x] 1.7 Implement **DOCX → PDF** — **decided:** delegate to headless LibreOffice (`soffice --headless --convert-to`, throwaway user profile per run); converter reports unavailable when soffice is missing (lookup: `BOINC_SOFFICE` env → PATH → known install paths). **Verified end-to-end against LibreOffice 26.2.4** (round-trip test + CLI produce real PDF 1.7 / Word 2007+ files); Linux CI now installs libreoffice-writer so the test runs on every push
+- [x] 1.8 Implement **PDF → DOCX** — **decided:** same LibreOffice backend with `--infilter=writer_pdf_import`; output is draw-frame text (lossy), acceptable for v1 per risk #1. **Verified end-to-end** (see 1.7)
 - [x] 1.9 Unit + integration tests with fixture files for every converter; golden-file round-trip tests where lossless (fixtures generated at test time; LibreOffice tests self-skip when soffice is absent)
 - [x] 1.10 Document "how to add a new converter" in `boinc-core/README.md`
 

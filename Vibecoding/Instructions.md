@@ -39,3 +39,6 @@ I created the repo: https://github.com/bartbeecoders/boinc.git
 push the files (main branch)
 create a full CI pipeline with our first release
 make sure that the boinc website points to this release (for downloads)
+
+
+Add the docx to pdf and pdf to docx conversions
