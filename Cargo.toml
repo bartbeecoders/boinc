@@ -15,7 +15,9 @@ rust-version = "1.85"
 [workspace.dependencies]
 boinc-core = { path = "crates/boinc-core" }
 boinc-integration = { path = "crates/boinc-integration" }
+clap = { version = "4", features = ["derive"] }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+serde_json = "1"
 tempfile = "3"
 thiserror = "2"
 

@@ -11,6 +11,14 @@ path = "src/main.rs"
 
 [dependencies]
 boinc-core.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+assert_cmd = "2"
+image.workspace = true
+predicates = "3"
+tempfile.workspace = true
 
 [lints]
 workspace = true

@@ -55,11 +55,11 @@ Source spec: `Vibecoding/Instructions.md`
 
 **Goal: scriptable interface and the target for OS context-menu commands.**
 
-- [ ] 2.1 `boinc convert <input> --to <format> [--out <path>]` with clear exit codes
-- [ ] 2.2 `boinc list-conversions [<file>]` — enumerate registry (used by integration layer and docs)
-- [ ] 2.3 Progress output on stderr (percent), machine-readable `--json` mode
-- [ ] 2.4 Batch mode: accept multiple input files
-- [ ] 2.5 CLI integration tests (assert_cmd) on fixture files
+- [x] 2.1 `boinc convert <input> --to <format> [--out <path>]` with clear exit codes (0 = all succeeded, 1 = any failed, 2 = usage; plus `--out-dir`, `--quality`, `--background RRGGBB`)
+- [x] 2.2 `boinc list-conversions [<file>]` — enumerate registry (used by integration layer and docs); `--all` includes tool-unavailable pairs
+- [x] 2.3 Progress output on stderr (percent), machine-readable `--json` mode (JSON lines: progress/converted/error events)
+- [x] 2.4 Batch mode: accept multiple input files (continues past per-file failures, exit 1 at end)
+- [x] 2.5 CLI integration tests (assert_cmd) on fixture files
 
 **Exit criteria:** a context-menu entry could be a one-line command invoking `boinc-cli`; conversions runnable in scripts on all platforms.
 
