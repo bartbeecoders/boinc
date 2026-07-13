@@ -1,37 +1,40 @@
 # Deploying the Boinc portal (boinc.hideterms.com)
 
-The portal is a React + Vite app in `site/` (`npm run dev` to work on it,
-`npm run build` → static output in `site/dist`). Hosting target: Cloudflare
-Pages. Deploys run automatically from GitHub Actions
-(`.github/workflows/deploy-site.yml`) on every push to `main` that touches
-`site/`: CI builds the app and uploads `site/dist`.
+The portal is a React + Vite app in `site/` (`npm run dev` to work on it).
+It is served from the VPS K3S cluster as an nginx container, exposed on
+**NodePort 32087**; a Cloudflare Tunnel (configured outside this repo)
+forwards `https://boinc.hideterms.com` to `<node>:32087`.
 
-## One-time setup
+## Deploy
 
-1. **Create the Pages project** (from a machine with wrangler authenticated):
+```sh
+./scripts/deploy-k3s.sh          # build → push → deploy → status
+```
 
-   ```sh
-   npx wrangler login                # once
-   npx wrangler pages project create boinc-portal --production-branch=main
-   cd site && npm ci && npm run build
-   npx wrangler pages deploy site/dist --project-name=boinc-portal   # first deploy
-   ```
+Steps it performs:
+1. `podman build` the image from `site/Dockerfile` (node builder → nginx),
+   tagged `beecodersregistry.azurecr.io/boinc-site:{latest,<version>}` with
+   the version from `site/package.json`.
+2. Push to the ACR registry (assumes `podman login beecodersregistry.azurecr.io`
+   has been run; or set `REGISTRY_USER`/`REGISTRY_PASSWORD`).
+3. Copy `k8s/boinc/` manifests to the VPS (`bart@212.47.77.32`, override with
+   `VPS_IP`/`VPS_USER`), apply namespace → acr-secret (copied from the
+   aidbooks/sqail namespace if missing) → service → deployment, then force a
+   rollout restart so the new `:latest` digest is pulled.
 
-2. **Custom domain.** In the Cloudflare dashboard: Pages → boinc-portal →
-   Custom domains → add `boinc.hideterms.com`. Because hideterms.com is on
-   Cloudflare, the CNAME record is created automatically; otherwise add:
+Subcommands: `build`, `push`, `deploy`, `status`, `logs`.
 
-   ```
-   CNAME  boinc  boinc-portal.pages.dev
-   ```
+## Health
 
-3. **CI secrets** (GitHub repo → Settings → Secrets and variables → Actions):
-   - `CLOUDFLARE_API_TOKEN` — create at dash.cloudflare.com/profile/api-tokens
-     with the "Cloudflare Pages — Edit" template.
-   - `CLOUDFLARE_ACCOUNT_ID` — visible on any zone's overview page.
+```sh
+curl http://212.47.77.32:32087/healthz   # "ok" from the nginx pod
+```
 
-After that, pushing changes to `site/` on `main` redeploys automatically;
-`workflow_dispatch` allows manual redeploys from the Actions tab.
+## Cloudflare Tunnel (manual, one-time)
+
+Add a public hostname to the existing tunnel on the VPS:
+`boinc.hideterms.com` → `http://localhost:32087`. DNS for the hostname is
+created by the tunnel config; no other DNS records are needed.
 
 ## Release coupling
 
@@ -40,10 +43,3 @@ GitHub API (`releases/latest`), so the site does **not** need a redeploy when
 a new version ships — publishing the GitHub release is enough. Without JS (or
 if the API is rate-limited) every button falls back to the GitHub releases
 page.
-
-## Manual deploy
-
-```sh
-cd site && npm ci && npm run build
-npx wrangler pages deploy site/dist --project-name=boinc-portal
-```

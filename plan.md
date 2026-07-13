@@ -117,10 +117,10 @@ Source spec: `Vibecoding/Instructions.md`
 
 - [x] 6.1 Landing page (`site/`, React 19 + Vite; originally static, converted on request): hero is an interactive recreation of the context menu (click "Convert to JPG" and the demo file converts, with an undo toast that converts it back); real app screenshot; verified via headless-Chrome screenshots at desktop + mobile widths, light + dark
 - [x] 6.2 Download section: per-OS detection highlights the visitor's cards and retargets the primary button; asset links resolved client-side from the GitHub releases API (so releases don't require a site redeploy), with the releases page as no-JS fallback
-- [x] 6.3 Deploy pipeline: `deploy-site.yml` → Cloudflare Pages on `site/**` changes; full runbook incl. DNS (`CNAME boinc → boinc-portal.pages.dev`) in `Vibecoding/deploy.md`. **Not yet live — needs the one-time wrangler/DNS setup and CI secrets (owner action)**
+- [x] 6.3 Hosting — **revised decision: VPS K3S instead of Cloudflare Pages.** `scripts/deploy-k3s.sh` builds the site image (node → nginx, `site/Dockerfile`), pushes to the ACR registry, and applies `k8s/boinc/` on the VPS: namespace, acr-secret copy, NodePort **32087** service, deployment with health probes. **Deployed and verified live** (`http://212.47.77.32:32087/healthz` → ok). Cloudflare Tunnel route `boinc.hideterms.com → localhost:32087` is owner-managed (pending); runbook in `Vibecoding/deploy.md`
 - [x] 6.4 Docs on-page: numbered how-it-works, per-OS install one-liners, FAQ (uploads, LibreOffice requirement, overwrite policy, batch, license)
 
-**Exit criteria:** boinc.hideterms.com is live, serves correct installer per visitor OS, updates automatically on release. *(Site is built and verified locally; going live blocks on the one-time Cloudflare/DNS setup and a GitHub remote with a published release.)*
+**Exit criteria:** boinc.hideterms.com is live, serves correct installer per visitor OS, updates automatically on release. *(Site is deployed and serving on the VPS NodePort; public hostname blocks only on the owner's Cloudflare Tunnel route. Download links need a GitHub remote with a published release.)*
 
 ---
 
