@@ -31,32 +31,34 @@
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='LocalAppDataFolder'>
                 <Directory Id='APPLICATIONFOLDER' Name='Boinc'>
+                    <!-- Per-user components must key on an HKCU registry
+                         value, not the file (ICE38). -->
                     <Component Id='BoincCli' Guid='6a1f2b3c-4d5e-4f60-8a9b-0c1d2e3f4a5b'>
                         <File
                             Id='BoincCliExe'
                             Name='boinc.exe'
-                            Source='$(var.CargoTargetBinDir)\boinc.exe'
-                            KeyPath='yes' />
+                            Source='$(var.CargoTargetBinDir)\boinc.exe' />
                         <RemoveFolder Id='RemoveAppFolder' On='uninstall' />
                         <RegistryValue
                             Root='HKCU'
                             Key='Software\Boinc'
                             Name='CliInstalled'
                             Type='integer'
-                            Value='1' />
+                            Value='1'
+                            KeyPath='yes' />
                     </Component>
                     <Component Id='BoincApp' Guid='7b2a3c4d-5e6f-4071-9bac-1d2e3f4a5b6c'>
                         <File
                             Id='BoincAppExe'
                             Name='boinc-app.exe'
-                            Source='$(var.CargoTargetBinDir)\boinc-app.exe'
-                            KeyPath='yes' />
+                            Source='$(var.CargoTargetBinDir)\boinc-app.exe' />
                         <RegistryValue
                             Root='HKCU'
                             Key='Software\Boinc'
                             Name='AppInstalled'
                             Type='integer'
-                            Value='1' />
+                            Value='1'
+                            KeyPath='yes' />
                     </Component>
                 </Directory>
             </Directory>
