@@ -40,6 +40,14 @@ fn install_status_uninstall_cycle() {
     let script = data.path().join("nautilus/scripts/PNG to JPG (Boinc)");
     assert!(script.is_file(), "missing {}", script.display());
 
+    // Nemo (Cinnamon) action, MIME-scoped.
+    let action = data
+        .path()
+        .join("nemo/actions/boinc-png-to-jpg.nemo_action");
+    assert!(action.is_file(), "missing {}", action.display());
+    let action_body = std::fs::read_to_string(&action).unwrap();
+    assert!(action_body.contains("Mimetypes=image/png;"));
+
     // Manifest recorded in the config dir.
     assert!(config.path().join("boinc/integration.json").is_file());
 
@@ -58,6 +66,7 @@ fn install_status_uninstall_cycle() {
 
     assert!(!kde.exists(), "uninstall must remove {}", kde.display());
     assert!(!script.exists());
+    assert!(!action.exists());
     assert!(!config.path().join("boinc/integration.json").exists());
 
     boinc(data.path(), config.path())

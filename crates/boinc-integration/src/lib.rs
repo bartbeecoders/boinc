@@ -144,12 +144,15 @@ fn install_platform(
     let kde = linux::kde_dir().ok_or_else(|| io::Error::other("no home directory available"))?;
     let nautilus =
         linux::nautilus_dir().ok_or_else(|| io::Error::other("no home directory available"))?;
+    let nemo = linux::nemo_dir().ok_or_else(|| io::Error::other("no home directory available"))?;
 
     for (from, entries) in by_from {
         let path = linux::kde_service_menu(&kde, cli, *from, entries)?;
         hooks.push(Hook::File { path });
         for entry in entries {
             let path = linux::nautilus_script(&nautilus, cli, entry)?;
+            hooks.push(Hook::File { path });
+            let path = linux::nemo_action(&nemo, cli, entry)?;
             hooks.push(Hook::File { path });
         }
     }

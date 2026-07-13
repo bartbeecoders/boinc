@@ -30,3 +30,6 @@ Create a detailed plan (save in plan.md) with phases and tasks.
 
 
 Convert the Boinc website to react/vite
+
+
+I'm on EndeavourOS, can you add to the dev.sh script the shortcuts on the file system. (cinnamon)

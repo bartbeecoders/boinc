@@ -86,7 +86,7 @@ Source spec: `Vibecoding/Instructions.md`
 **Goal: right-click a file in the native file browser → Boinc submenu with valid conversions.**
 
 - [x] 4.1 Design the integration layer: `boinc integrate install/uninstall/status` subcommands; entries generated from the converter registry (available conversions only — re-run install after adding LibreOffice); every created hook recorded in a JSON manifest so uninstall/status touch exactly what we wrote
-- [x] 4.2 **Linux:** KDE Dolphin ServiceMenus (`kio/servicemenus`, one MIME-scoped `.desktop` per source format, executable bit set, `%F` batch) + Nautilus scripts (no MIME scoping possible — unsupported files fail with a notify-send; documented deviation). Verified live incl. spaces/unicode filenames
+- [x] 4.2 **Linux:** KDE Dolphin ServiceMenus (`kio/servicemenus`, one MIME-scoped `.desktop` per source format, executable bit set, `%F` batch) + Nautilus scripts (no MIME scoping possible — unsupported files fail with a notify-send; documented deviation) + Nemo/Cinnamon actions (`nemo/actions`, MIME-scoped `.nemo_action` per conversion — added for EndeavourOS/Cinnamon, installed live). Verified live incl. spaces/unicode filenames
 - [x] 4.3 **Windows:** cascading HKCU `SystemFileAssociations\<ext>\shell\Boinc` verbs via winreg (`MUIVerb` + empty `SubCommands` + nested shell keys); cross-checked with `cargo check --target x86_64-pc-windows-msvc`
 - [x] 4.4 **macOS:** generated Finder Quick Action `.workflow` bundles in `~/Library/Services`, UTI-scoped via `NSSendFileTypes`; cross-checked with `cargo check --target aarch64-apple-darwin`
 - [x] 4.5 Launch-at-login per platform (XDG autostart / HKCU Run key / LaunchAgent); the app's settings toggle now actually registers/unregisters on save

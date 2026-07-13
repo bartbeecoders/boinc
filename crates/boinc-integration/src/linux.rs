@@ -1,5 +1,5 @@
 //! Linux integration: KDE (Dolphin) service menus with MIME scoping, GNOME
-//! Nautilus scripts, and an XDG autostart entry.
+//! Nautilus scripts, Cinnamon (Nemo) actions, and an XDG autostart entry.
 //!
 //! KDE: one `.desktop` file per source format under
 //! `$XDG_DATA_HOME/kio/servicemenus/`, marked executable (required since
@@ -9,6 +9,11 @@
 //! Nautilus: scripts under `$XDG_DATA_HOME/nautilus/scripts/` (shown in the
 //! "Scripts" submenu). Nautilus scripts cannot be MIME-scoped; unsupported
 //! files fail gracefully with a notify-send message.
+//!
+//! Nemo (Cinnamon): one `.nemo_action` per conversion under
+//! `$XDG_DATA_HOME/nemo/actions/`, MIME-scoped via `Mimetypes=`. Nemo has no
+//! submenu grouping, so entries appear as "Convert to JPG (Boinc)" directly
+//! in the context menu. Nemo watches the directory — no restart needed.
 
 use std::io::Write as _;
 use std::os::unix::fs::PermissionsExt as _;
@@ -76,6 +81,30 @@ pub fn nautilus_script(dir: &Path, cli: &Path, entry: &MenuEntry) -> std::io::Re
     Ok(path)
 }
 
+/// One Nemo action per conversion, batch-capable via `%F`.
+pub fn nemo_action(dir: &Path, cli: &Path, entry: &MenuEntry) -> std::io::Result<PathBuf> {
+    let body = format!(
+        "[Nemo Action]\n\
+         Active=true\n\
+         Name={label} (Boinc)\n\
+         Comment=Convert the selected file(s) to {to} with Boinc\n\
+         Exec=\"{cli}\" convert --to {to_ext} %F\n\
+         Icon-Name=document-export\n\
+         Selection=NotNone\n\
+         Mimetypes={mime};\n",
+        label = entry.label(),
+        to = entry.to.display_name(),
+        cli = cli.display(),
+        to_ext = entry.to.extension(),
+        mime = mime_type(entry.from),
+    );
+
+    std::fs::create_dir_all(dir)?;
+    let path = dir.join(format!("boinc-{}.nemo_action", entry.id()));
+    std::fs::write(&path, body)?;
+    Ok(path)
+}
+
 /// XDG autostart entry for the tray app.
 pub fn autostart_file(dir: &Path, app: &Path) -> std::io::Result<PathBuf> {
     let body = format!(
@@ -110,6 +139,11 @@ pub fn kde_dir() -> Option<PathBuf> {
 /// `$XDG_DATA_HOME/nautilus/scripts`
 pub fn nautilus_dir() -> Option<PathBuf> {
     directories::BaseDirs::new().map(|b| b.data_dir().join("nautilus/scripts"))
+}
+
+/// `$XDG_DATA_HOME/nemo/actions`
+pub fn nemo_dir() -> Option<PathBuf> {
+    directories::BaseDirs::new().map(|b| b.data_dir().join("nemo/actions"))
 }
 
 /// `$XDG_CONFIG_HOME/autostart`
@@ -159,6 +193,22 @@ mod tests {
         let body = std::fs::read_to_string(&path).unwrap();
         assert!(body.contains("convert \"$f\" --to jpg"));
         assert!(path.file_name().unwrap().to_str().unwrap() == "PNG to JPG (Boinc)");
+    }
+
+    #[test]
+    fn nemo_action_is_mime_scoped() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = nemo_action(dir.path(), Path::new("/usr/bin/boinc"), &entry()).unwrap();
+        assert_eq!(
+            path.file_name().unwrap().to_str().unwrap(),
+            "boinc-png-to-jpg.nemo_action"
+        );
+        let body = std::fs::read_to_string(&path).unwrap();
+        assert!(body.starts_with("[Nemo Action]\n"));
+        assert!(body.contains("Name=Convert to JPG (Boinc)"));
+        assert!(body.contains("Exec=\"/usr/bin/boinc\" convert --to jpg %F"));
+        assert!(body.contains("Mimetypes=image/png;"));
+        assert!(body.contains("Selection=NotNone"));
     }
 
     #[test]
