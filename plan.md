@@ -36,16 +36,16 @@ Source spec: `Vibecoding/Instructions.md`
 
 **Goal: a pluggable conversion engine, fully usable as a library.**
 
-- [ ] 1.1 Define core types: `Format` enum (Pdf, Docx, Png, Jpg, …), `ConversionRequest`, `ConversionResult`, structured `ConversionError`
-- [ ] 1.2 Define the `Converter` trait: `supports() -> (Format, Format)`, `convert(input, output, options, progress_callback)`
-- [ ] 1.3 Build the `ConverterRegistry`: register converters, look up by format pair, list available conversions for a given input format (drives the context-menu entries later)
-- [ ] 1.4 Format detection from file extension + magic bytes (don't trust extension alone)
-- [ ] 1.5 Output-path policy: default to same directory with new extension, never overwrite silently (append ` (1)` etc.), configurable
-- [ ] 1.6 Implement **PNG → JPG** and **JPG → PNG** using the `image` crate (options: JPEG quality, background color for alpha flattening)
-- [ ] 1.7 Implement **DOCX → PDF** — decision point (see Risks): pragmatic v1 route is delegating to headless LibreOffice when present; pure-Rust route needs DOCX parse + layout + PDF render
-- [ ] 1.8 Implement **PDF → DOCX** — decision point: pure-Rust text-extraction route (`pdf-extract`/`lopdf` → `docx-rs`, layout is lossy) vs. LibreOffice delegation
-- [ ] 1.9 Unit + integration tests with fixture files for every converter; golden-file round-trip tests where lossless
-- [ ] 1.10 Document "how to add a new converter" in `boinc-core/README.md`
+- [x] 1.1 Define core types: `Format` enum (Pdf, Docx, Png, Jpg, …), `ConversionRequest`, `ConversionResult`, structured `ConversionError`
+- [x] 1.2 Define the `Converter` trait: `supports() -> (Format, Format)`, `convert(input, output, options, progress_callback)` — plus `is_available()` for tool-backed converters
+- [x] 1.3 Build the `ConverterRegistry`: register converters, look up by format pair, list available conversions for a given input format (drives the context-menu entries later)
+- [x] 1.4 Format detection from file extension + magic bytes (don't trust extension alone)
+- [x] 1.5 Output-path policy: default to same directory with new extension, never overwrite silently (append ` (1)` etc.), configurable
+- [x] 1.6 Implement **PNG → JPG** and **JPG → PNG** using the `image` crate (options: JPEG quality, background color for alpha flattening)
+- [x] 1.7 Implement **DOCX → PDF** — **decided:** delegate to headless LibreOffice (`soffice --headless --convert-to`, throwaway user profile per run); converter reports unavailable when soffice is missing (lookup: `BOINC_SOFFICE` env → PATH → known install paths)
+- [x] 1.8 Implement **PDF → DOCX** — **decided:** same LibreOffice backend with `--infilter=writer_pdf_import`; output is draw-frame text (lossy), acceptable for v1 per risk #1
+- [x] 1.9 Unit + integration tests with fixture files for every converter; golden-file round-trip tests where lossless (fixtures generated at test time; LibreOffice tests self-skip when soffice is absent)
+- [x] 1.10 Document "how to add a new converter" in `boinc-core/README.md`
 
 **Exit criteria:** all four conversions work via the library API with tests; adding a mock converter requires no changes outside its own module + registration.
 

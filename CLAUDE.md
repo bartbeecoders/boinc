@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Status
 
-Early scaffolding stage. The product spec lives in `Vibecoding/Instructions.md`; the phased implementation plan (with task checkboxes and key risk decisions) lives in `plan.md`. Phase 0 (workspace scaffolding) is done; converters, CLI subcommands, UI, and OS integration are not yet implemented.
+The product spec lives in `Vibecoding/Instructions.md`; the phased implementation plan (with task checkboxes and key risk decisions) lives in `plan.md`. Phases 0–1 are done: the core engine with all four converters works via the library API. CLI subcommands (Phase 2), the Floem UI (Phase 3), and OS integration (Phase 4) are not yet implemented.
+
+Key engine facts: conversions are `Converter` trait impls in a `ConverterRegistry` keyed by (from, to) `Format` pair — see `crates/boinc-core/README.md` for how to add one. PDF↔DOCX delegates to headless LibreOffice (`soffice`) found via `BOINC_SOFFICE` env → PATH → known paths; those converters report `is_available() == false` without it, and their tests self-skip. Format detection trusts magic bytes over extensions. Outputs are never silently overwritten (` (1)` suffix policy).
 
 ## Commands
 

@@ -6,6 +6,14 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+image.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+image.workspace = true
+tempfile.workspace = true
+zip = "2"
 
 [lints]
 workspace = true
