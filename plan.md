@@ -69,15 +69,15 @@ Source spec: `Vibecoding/Instructions.md`
 
 **Goal: resident tray application with a minimal Floem UI.**
 
-- [ ] 3.1 Tray icon with menu (Open Boinc, Recent conversions, Pause, Quit) — evaluate `tray-icon` crate alongside Floem's event loop; verify coexistence on all three platforms early (spike task)
-- [ ] 3.2 Main Floem window: drag-and-drop a file → pick target format (from registry) → convert with progress bar
-- [ ] 3.3 Conversion queue: run conversions on worker threads, show per-job progress/state, cancelation
-- [ ] 3.4 Notifications on completion/failure (native notifications, click to reveal output file)
-- [ ] 3.5 Settings screen: output-path policy, JPEG quality defaults, launch-at-login toggle
-- [ ] 3.6 Single-instance guard + local IPC (e.g. unix socket / named pipe) so CLI/context-menu invocations can hand jobs to the running app instead of spawning a second process
-- [ ] 3.7 Persist settings + conversion history (small on-disk store, e.g. JSON in the platform config dir via `directories` crate)
+- [x] 3.1 Tray icon with menu — **spike outcome:** Linux runs tray-icon on a dedicated GTK thread (independent of Floem/winit); Windows/macOS create the tray on the main thread before Floem's loop starts. Menu: Open / Pause conversions (check item) / Quit. *Deviations:* "Recent conversions" submenu deferred; Floem 0.2 exits when the last window closes (no close-interception), so v1 residency = tray lives while the window is open, closing the window quits — revisit in Phase 7 (see `tray.rs` doc comment).
+- [x] 3.2 Main Floem window: drag-and-drop a file → pick target format (from registry) → convert with progress bar (verified end-to-end via screenshot + programmatic click)
+- [x] 3.3 Conversion queue: worker thread owns the job list, streams snapshots to the UI via channel-backed signal; cancelation of *queued* jobs (cancel-while-running deferred); pause via tray toggle
+- [x] 3.4 Notifications on completion/failure via notify-rust (*click-to-reveal deferred* — body includes the output path)
+- [x] 3.5 Settings screen: output directory, JPEG quality default, launch-at-login toggle (stored only; actual registration is task 4.5)
+- [x] 3.6 Single-instance guard + local IPC (interprocess local socket, JSON lines: open/pick/convert); second instance forwards args and exits (measured 13 ms)
+- [x] 3.7 Persist settings (`config_dir/settings.json`) + conversion history (`data_dir/history.json`, capped at 100) via `directories`
 
-**Exit criteria:** app runs in tray on all three platforms; a file dropped on the window or sent via IPC converts with visible progress and a notification.
+**Exit criteria:** app runs in tray on all three platforms; a file dropped on the window or sent via IPC converts with visible progress and a notification. *(Verified on Linux; Windows/macOS compile in CI but need manual verification — tracked under 4.6/7.3.)*
 
 ---
 

@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Status
 
-The product spec lives in `Vibecoding/Instructions.md`; the phased implementation plan (with task checkboxes and key risk decisions) lives in `plan.md`. Phases 0–2 are done: the core engine with all four converters works via the library API and the `boinc` CLI (`convert`, `list-conversions`, `--json` mode; exit codes 0/1/2 = success/conversion failure/usage). The Floem UI (Phase 3) and OS integration (Phase 4) are not yet implemented.
+The product spec lives in `Vibecoding/Instructions.md`; the phased implementation plan (with task checkboxes and key risk decisions) lives in `plan.md`. Phases 0–3 are done: the core engine with all four converters works via the library API, the `boinc` CLI (`convert`, `list-conversions`, `--json` mode; exit codes 0/1/2 = success/conversion failure/usage), and the Floem tray app (drop-to-convert window, worker-thread queue, notifications, settings, single-instance IPC). OS integration (Phase 4) is not yet implemented.
+
+App architecture facts: the worker thread owns the job list and streams `UiMsg::Jobs` snapshots over a crossbeam channel bridged into a floem signal (`create_signal_from_channel`). The tray runs on a dedicated GTK thread on Linux, on the main thread on Windows/macOS. Floem 0.2 exits when the last window closes — closing the window quits the app (v1 limitation, see `crates/boinc-app/src/tray.rs`). A second app instance forwards `{"cmd":"open"|"pick"|"convert"}` JSON lines over the local socket `boinc.sock` and exits; Linux CI builds need `libgtk-3-dev`.
 
 Key engine facts: conversions are `Converter` trait impls in a `ConverterRegistry` keyed by (from, to) `Format` pair — see `crates/boinc-core/README.md` for how to add one. PDF↔DOCX delegates to headless LibreOffice (`soffice`) found via `BOINC_SOFFICE` env → PATH → known paths; those converters report `is_available() == false` without it, and their tests self-skip. Format detection trusts magic bytes over extensions. Outputs are never silently overwritten (` (1)` suffix policy).
 
