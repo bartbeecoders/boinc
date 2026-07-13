@@ -31,6 +31,24 @@ enum Command {
     Convert(ConvertArgs),
     /// List supported conversions, or the targets available for a file
     ListConversions(ListArgs),
+    /// Install, remove, or inspect the OS context-menu integration
+    Integrate(IntegrateArgs),
+}
+
+#[derive(Args)]
+struct IntegrateArgs {
+    #[command(subcommand)]
+    action: IntegrateAction,
+}
+
+#[derive(Subcommand)]
+enum IntegrateAction {
+    /// Write context-menu hooks for every currently-available conversion
+    Install,
+    /// Remove everything a previous install created
+    Uninstall,
+    /// Show installed hooks and whether they are still present
+    Status,
 }
 
 #[derive(Args)]
@@ -102,6 +120,62 @@ fn main() -> ExitCode {
     match cli.command {
         Command::Convert(args) => run_convert(&registry, &args),
         Command::ListConversions(args) => run_list(&registry, &args),
+        Command::Integrate(args) => run_integrate(&registry, &args),
+    }
+}
+
+fn run_integrate(registry: &ConverterRegistry, args: &IntegrateArgs) -> ExitCode {
+    match args.action {
+        IntegrateAction::Install => {
+            let cli = match std::env::current_exe() {
+                Ok(path) => path,
+                Err(err) => {
+                    eprintln!("error: cannot locate the boinc binary: {err}");
+                    return ExitCode::FAILURE;
+                }
+            };
+            match boinc_integration::install(registry, &cli) {
+                Ok(report) => {
+                    for created in &report.created {
+                        println!("installed: {created}");
+                    }
+                    println!(
+                        "{} hook(s) installed; menus invoke {}",
+                        report.created.len(),
+                        cli.display()
+                    );
+                    ExitCode::SUCCESS
+                }
+                Err(err) => {
+                    eprintln!("error: install failed: {err}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        IntegrateAction::Uninstall => match boinc_integration::uninstall() {
+            Ok(report) => {
+                for removed in &report.removed {
+                    println!("removed: {removed}");
+                }
+                println!("{} hook(s) removed", report.removed.len());
+                ExitCode::SUCCESS
+            }
+            Err(err) => {
+                eprintln!("error: uninstall failed: {err}");
+                ExitCode::FAILURE
+            }
+        },
+        IntegrateAction::Status => {
+            let hooks = boinc_integration::status();
+            if hooks.is_empty() {
+                println!("not installed");
+            } else {
+                for (hook, present) in hooks {
+                    println!("{}: {hook}", if present { "ok     " } else { "missing" });
+                }
+            }
+            ExitCode::SUCCESS
+        }
     }
 }
 

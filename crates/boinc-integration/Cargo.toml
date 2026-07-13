@@ -7,6 +7,15 @@ rust-version.workspace = true
 
 [dependencies]
 boinc-core.workspace = true
+directories.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.56"
+
+[dev-dependencies]
+tempfile.workspace = true
 
 [lints]
 workspace = true

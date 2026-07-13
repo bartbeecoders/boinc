@@ -65,6 +65,12 @@ pub fn add_pick(registry: &ConverterRegistry, picks: RwSignal<Vec<PendingPick>>,
     });
 }
 
+/// Register or unregister this binary as a login item.
+fn apply_autostart(enabled: bool) -> std::io::Result<()> {
+    let app = std::env::current_exe()?;
+    boinc_integration::set_autostart(enabled, &app)
+}
+
 fn file_name(path: &Path) -> String {
     path.file_name()
         .map(|n| n.to_string_lossy().into_owned())
@@ -282,8 +288,12 @@ fn settings_view(ctx: AppCtx) -> impl IntoView {
             };
             match new_settings.save() {
                 Ok(()) => {
+                    let autostart = apply_autostart(new_settings.launch_at_login);
                     *ctx.settings.lock().expect("settings mutex not poisoned") = new_settings;
-                    status.set("Saved".into());
+                    match autostart {
+                        Ok(()) => status.set("Saved".into()),
+                        Err(err) => status.set(format!("Saved (autostart failed: {err})")),
+                    }
                 }
                 Err(err) => status.set(format!("Could not save: {err}")),
             }

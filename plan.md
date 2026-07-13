@@ -85,14 +85,14 @@ Source spec: `Vibecoding/Instructions.md`
 
 **Goal: right-click a file in the native file browser → Boinc submenu with valid conversions.**
 
-- [ ] 4.1 Design the integration layer: `boinc integrate install/uninstall/status` subcommands that write/remove the per-platform hooks; entries generated from the converter registry so new converters appear automatically
-- [ ] 4.2 **Linux:** `.desktop` entries + file-manager integration — Nautilus (GNOME) scripts/actions, KDE Dolphin ServiceMenus (`.desktop` in `kio/servicemenus`), MIME-type scoping so only convertible files show the menu
-- [ ] 4.3 **Windows:** registry context-menu verbs (HKCU `Software\Classes\SystemFileAssociations\<ext>\shell\Boinc\...`) with a cascading submenu invoking `boinc-cli`; no COM shell extension in v1
-- [ ] 4.4 **macOS:** Finder Quick Actions / Services (`NSServices` in the app bundle or Automator workflows installed to `~/Library/Services`) scoped to supported file types
-- [ ] 4.5 Launch-at-login service registration per platform (XDG autostart, Windows Run key / Task Scheduler, macOS LaunchAgent)
-- [ ] 4.6 Manual test matrix: each platform × each conversion from the context menu, including filenames with spaces/unicode
+- [x] 4.1 Design the integration layer: `boinc integrate install/uninstall/status` subcommands; entries generated from the converter registry (available conversions only — re-run install after adding LibreOffice); every created hook recorded in a JSON manifest so uninstall/status touch exactly what we wrote
+- [x] 4.2 **Linux:** KDE Dolphin ServiceMenus (`kio/servicemenus`, one MIME-scoped `.desktop` per source format, executable bit set, `%F` batch) + Nautilus scripts (no MIME scoping possible — unsupported files fail with a notify-send; documented deviation). Verified live incl. spaces/unicode filenames
+- [x] 4.3 **Windows:** cascading HKCU `SystemFileAssociations\<ext>\shell\Boinc` verbs via winreg (`MUIVerb` + empty `SubCommands` + nested shell keys); cross-checked with `cargo check --target x86_64-pc-windows-msvc`
+- [x] 4.4 **macOS:** generated Finder Quick Action `.workflow` bundles in `~/Library/Services`, UTI-scoped via `NSSendFileTypes`; cross-checked with `cargo check --target aarch64-apple-darwin`
+- [x] 4.5 Launch-at-login per platform (XDG autostart / HKCU Run key / LaunchAgent); the app's settings toggle now actually registers/unregisters on save
+- [ ] 4.6 Manual test matrix: **Linux done** (KDE exec line + Nautilus script, spaces/unicode); Windows + macOS pending real-machine QA (folded into 7.3)
 
-**Exit criteria:** on each OS, right-clicking a PNG shows "Boinc → Convert to JPG" (and only valid targets), and selecting it produces the converted file with a notification.
+**Exit criteria:** on each OS, right-clicking a PNG shows "Boinc → Convert to JPG" (and only valid targets), and selecting it produces the converted file with a notification. *(Met on Linux; Windows/macOS hooks are written per platform docs but unverified on real machines — the CLI conversion they invoke shows no notification yet, see 7.1.)*
 
 ---
 
