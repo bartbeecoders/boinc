@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boinc — Right-click. Converted.</title>
+<meta name="description" content="Boinc adds Convert to… to your file manager's right-click menu. PNG, JPG, PDF and DOCX — converted on your machine, never uploaded.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23f08200'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a class="brand" href="#top"><span class="disc" aria-hidden="true"></span>boinc</a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#downloads">Downloads</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://github.com/bartbeecoders/boinc">GitHub</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="hero-copy">
+    <p class="eyebrow">File conversion for the desktop</p>
+    <h1>Right-click.<br>Converted.</h1>
+    <p class="lede">Boinc adds <em>Convert&nbsp;to…</em> to your file manager's right-click menu.
+    Files convert on your machine, next to the originals — nothing is uploaded anywhere.</p>
+    <div class="cta-row">
+      <a class="btn-primary" id="primary-download" href="https://github.com/bartbeecoders/boinc/releases/latest">Download Boinc</a>
+      <a class="btn-quiet" href="#downloads">All platforms ↓</a>
+    </div>
+    <p class="fine">Free &amp; open source (MIT) · Linux, Windows, macOS</p>
+  </div>
+
+  <!-- The product, demonstrated: a real context menu you can click. -->
+  <div class="demo" aria-label="Interactive demo of the Boinc context menu">
+    <div class="file-card" id="file-card">
+      <svg class="file-icon" viewBox="0 0 40 48" aria-hidden="true">
+        <path class="page" d="M4 2h22l10 10v34H4z"/>
+        <path class="fold" d="M26 2l10 10H26z"/>
+        <text x="20" y="38" text-anchor="middle" id="file-badge">PNG</text>
+      </svg>
+      <div>
+        <div class="file-name" id="file-name">vacation.png</div>
+        <div class="file-meta">2.4 MB · today 14:32</div>
+      </div>
+      <div class="scan" id="scan" aria-hidden="true"></div>
+    </div>
+
+    <div class="menu" role="menu" aria-label="File context menu">
+      <div class="menu-item dim" role="menuitem" aria-disabled="true">Open</div>
+      <div class="menu-item dim" role="menuitem" aria-disabled="true">Open with…</div>
+      <div class="menu-sep"></div>
+      <div class="menu-item dim" role="menuitem" aria-disabled="true">Copy</div>
+      <div class="menu-item dim" role="menuitem" aria-disabled="true">Rename…</div>
+      <div class="menu-sep"></div>
+      <div class="menu-item selected" aria-expanded="true">
+        <span class="disc small" aria-hidden="true"></span>Boinc<span class="chev" aria-hidden="true">▸</span>
+      </div>
+      <div class="menu-item dim" role="menuitem" aria-disabled="true">Properties</div>
+
+      <div class="submenu">
+        <button class="menu-item action" id="convert-btn" type="button"><span>Convert to <span id="target-format">JPG</span></span></button>
+      </div>
+    </div>
+    <p class="demo-hint" id="demo-hint">Go on — click it. That's the whole product.</p>
+  </div>
+</header>
+
+<main>
+<section class="section" id="how">
+  <h2><span class="disc small" aria-hidden="true"></span>How it works</h2>
+  <ol class="steps">
+    <li>
+      <h3>Right-click a file</h3>
+      <p>Boinc appears in the menu of every file it can convert — and only those.</p>
+    </li>
+    <li>
+      <h3>Pick the target format</h3>
+      <p>Only valid conversions are offered. A PNG shows <em>Convert to JPG</em>, nothing else.</p>
+    </li>
+    <li>
+      <h3>Done</h3>
+      <p>The converted copy lands next to the original. Boinc never overwrites your files —
+      a second convert becomes <code>photo&nbsp;(1).jpg</code>.</p>
+    </li>
+  </ol>
+</section>
+
+<section class="section" id="formats">
+  <h2><span class="disc small" aria-hidden="true"></span>What it converts</h2>
+  <div class="format-grid">
+    <div class="format-card">
+      <div class="pair"><code>PNG</code><span class="arrows">⇄</span><code>JPG</code></div>
+      <p>Both directions, out of the box. Transparency is flattened onto a background color
+      you choose; JPEG quality is configurable.</p>
+    </div>
+    <div class="format-card">
+      <div class="pair"><code>PDF</code><span class="arrows">⇄</span><code>DOCX</code></div>
+      <p>Both directions, powered by <a href="https://www.libreoffice.org/">LibreOffice</a> when
+      it's installed. No LibreOffice — no menu entry; Boinc doesn't offer what it can't do.</p>
+    </div>
+  </div>
+  <p class="aside">Under the hood every conversion is a plug-in against one small engine,
+  so new formats join the menu without redesigning anything.</p>
+</section>
+
+<section class="section" id="app">
+  <div class="app-split">
+    <div>
+      <h2><span class="disc small" aria-hidden="true"></span>There's an app, too</h2>
+      <p>The tray application handles everything the menu doesn't: drop in files, queue big
+      batches, watch progress, pause, and get a desktop notification when each file is ready.</p>
+      <ul class="plain-list">
+        <li>Drag &amp; drop any convertible file</li>
+        <li>Sequential queue with per-file progress</li>
+        <li>Default output folder and JPEG quality in Settings</li>
+        <li>Start at login, sit in the tray</li>
+      </ul>
+    </div>
+    <figure class="shot">
+      <img src="assets/app-window.png" alt="The Boinc window: a drop zone, a pending file with a Convert to JPG button, and a Settings button" width="520" height="210" loading="lazy">
+      <figcaption>The actual window — this screenshot is from the app, not a mock-up.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section" id="downloads">
+  <h2><span class="disc small" aria-hidden="true"></span>Downloads</h2>
+  <p class="aside" id="release-note">Latest release, straight from GitHub.</p>
+  <div class="dl-grid">
+    <div class="dl-card" data-os="linux">
+      <h3>Debian / Ubuntu</h3>
+      <a class="btn-secondary" data-asset=".deb" href="https://github.com/bartbeecoders/boinc/releases/latest">Download .deb</a>
+      <code>sudo apt install ./boinc_*.deb</code>
+    </div>
+    <div class="dl-card" data-os="linux">
+      <h3>Fedora / openSUSE</h3>
+      <a class="btn-secondary" data-asset=".rpm" href="https://github.com/bartbeecoders/boinc/releases/latest">Download .rpm</a>
+      <code>sudo dnf install ./boinc-*.rpm</code>
+    </div>
+    <div class="dl-card" data-os="windows">
+      <h3>Windows</h3>
+      <a class="btn-secondary" data-asset=".msi" href="https://github.com/bartbeecoders/boinc/releases/latest">Download .msi</a>
+      <code>Run the installer — no admin needed.</code>
+    </div>
+    <div class="dl-card" data-os="mac">
+      <h3>macOS</h3>
+      <a class="btn-secondary" data-asset=".dmg" href="https://github.com/bartbeecoders/boinc/releases/latest">Download .dmg</a>
+      <code>Unsigned for now: right-click → Open once.</code>
+    </div>
+  </div>
+  <p class="aside">After installing, open Boinc once — it sets up the right-click menu for
+  your user account. <code>boinc integrate uninstall</code> removes it just as cleanly.</p>
+</section>
+
+<section class="section" id="faq">
+  <h2><span class="disc small" aria-hidden="true"></span>Questions, answered</h2>
+  <details>
+    <summary>Do my files get uploaded somewhere?</summary>
+    <p>No. Boinc is a desktop program; conversions run entirely on your computer. This website's
+    only job is to hand you the installer.</p>
+  </details>
+  <details>
+    <summary>Why don't I see PDF → DOCX in my menu?</summary>
+    <p>Document conversions use LibreOffice as their engine. Install
+    <a href="https://www.libreoffice.org/">LibreOffice</a>, open Boinc once, and the entries appear.</p>
+  </details>
+  <details>
+    <summary>Can it overwrite my original?</summary>
+    <p>Never. The original stays untouched and the copy gets a free name —
+    <code>report.pdf</code> becomes <code>report.docx</code>, or <code>report&nbsp;(1).docx</code>
+    if that name is taken.</p>
+  </details>
+  <details>
+    <summary>Can I convert many files at once?</summary>
+    <p>Yes — select several files before right-clicking (Linux), drop a batch on the app window,
+    or use the CLI: <code>boinc convert *.png --to jpg</code>.</p>
+  </details>
+  <details>
+    <summary>Is it really free?</summary>
+    <p>MIT-licensed, source on <a href="https://github.com/bartbeecoders/boinc">GitHub</a>.
+    No account, no tier, no "3 conversions per day".</p>
+  </details>
+</section>
+</main>
+
+<footer class="footer">
+  <span><span class="disc small" aria-hidden="true"></span>Boinc</span>
+  <span>MIT License · <a href="https://github.com/bartbeecoders/boinc">Source on GitHub</a> · a hideterms.com project</span>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="disc small" aria-hidden="true"></span>
+  <div>
+    <strong>Converted vacation.png</strong>
+    <div class="toast-body">Saved as <code id="toast-name">vacation.jpg</code> — next to the original.</div>
+  </div>
+  <button class="toast-undo" id="undo-btn" type="button">Convert it back</button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

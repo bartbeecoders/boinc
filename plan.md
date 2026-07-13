@@ -115,12 +115,12 @@ Source spec: `Vibecoding/Instructions.md`
 
 **Goal: landing page with downloads.**
 
-- [ ] 6.1 Landing page: what Boinc does, supported conversions, screenshots/GIF of the context-menu flow
-- [ ] 6.2 Download section with per-OS detection and links to latest release artifacts
-- [ ] 6.3 Static hosting + deploy pipeline (site rebuilt/updated on each release), DNS setup for boinc.hideterms.com
-- [ ] 6.4 Minimal docs page: install steps per OS, how conversions work, FAQ
+- [x] 6.1 Landing page (`site/`, static HTML/CSS/JS, no build step): hero is an interactive recreation of the context menu (click "Convert to JPG" and the demo file converts, with an undo toast that converts it back); real app screenshot; verified via headless-Chrome screenshots at desktop + mobile widths, light + dark
+- [x] 6.2 Download section: per-OS detection highlights the visitor's cards and retargets the primary button; asset links resolved client-side from the GitHub releases API (so releases don't require a site redeploy), with the releases page as no-JS fallback
+- [x] 6.3 Deploy pipeline: `deploy-site.yml` → Cloudflare Pages on `site/**` changes; full runbook incl. DNS (`CNAME boinc → boinc-portal.pages.dev`) in `Vibecoding/deploy.md`. **Not yet live — needs the one-time wrangler/DNS setup and CI secrets (owner action)**
+- [x] 6.4 Docs on-page: numbered how-it-works, per-OS install one-liners, FAQ (uploads, LibreOffice requirement, overwrite policy, batch, license)
 
-**Exit criteria:** boinc.hideterms.com is live, serves correct installer per visitor OS, updates automatically on release.
+**Exit criteria:** boinc.hideterms.com is live, serves correct installer per visitor OS, updates automatically on release. *(Site is built and verified locally; going live blocks on the one-time Cloudflare/DNS setup and a GitHub remote with a published release.)*
 
 ---
 
