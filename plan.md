@@ -103,7 +103,7 @@ Source spec: `Vibecoding/Instructions.md`
 - [x] 5.1 **Linux:** `.deb` + `.rpm` via cargo-deb/cargo-generate-rpm — built and inspected locally (binaries, desktop entry, icon, LICENSE; gtk3 dependency, libreoffice recommends). *Deviations:* AppImage/Flatpak deferred; instead of a root post-install hook, the app performs **per-user context-menu integration on first run** (idempotent, manifest-guarded) — cleaner than root-time hooks and shared by all three platforms
 - [x] 5.2 **Windows:** hand-written WiX 3 config (`wix/main.wxs`), per-user scope, both binaries + Start Menu shortcut, MajorUpgrade handling; built in CI via cargo-wix (context menus/autostart via first-run integration, no custom actions). *Not yet run on a real Windows machine*
 - [x] 5.3 **macOS:** `scripts/package-macos.sh` builds Boinc.app + dmg; codesign hook via `APPLE_SIGNING_IDENTITY`. **Unsigned until an Apple Developer account exists — notarization still open (risk #3)**
-- [x] 5.4 CI release pipeline (`release.yml`): `v*` tag → deb/rpm/msi/dmg attached to the GitHub release
+- [x] 5.4 CI release pipeline (`release.yml`): `v*` tag → deb/rpm/msi/dmg attached to the GitHub release — **proven: v0.1.0 shipped with all four artifacts** (github.com/bartbeecoders/boinc/releases/tag/v0.1.0)
 - [x] 5.5 Auto-update: **decided** — no in-app updater in v1; the portal announces new versions (documented in README)
 - [x] 5.6 Versioning + changelog: single workspace version, semver, Keep-a-Changelog `CHANGELOG.md`; release steps in README
 
@@ -120,7 +120,7 @@ Source spec: `Vibecoding/Instructions.md`
 - [x] 6.3 Hosting — **revised decision: VPS K3S instead of Cloudflare Pages.** `scripts/deploy-k3s.sh` builds the site image (node → nginx, `site/Dockerfile`), pushes to the ACR registry, and applies `k8s/boinc/` on the VPS: namespace, acr-secret copy, NodePort **32087** service, deployment with health probes. **Deployed and verified live** (`http://212.47.77.32:32087/healthz` → ok). Cloudflare Tunnel route `boinc.hideterms.com → localhost:32087` is owner-managed (pending); runbook in `Vibecoding/deploy.md`
 - [x] 6.4 Docs on-page: numbered how-it-works, per-OS install one-liners, FAQ (uploads, LibreOffice requirement, overwrite policy, batch, license)
 
-**Exit criteria:** boinc.hideterms.com is live, serves correct installer per visitor OS, updates automatically on release. *(Site is deployed and serving on the VPS NodePort; public hostname blocks only on the owner's Cloudflare Tunnel route. Download links need a GitHub remote with a published release.)*
+**Exit criteria:** boinc.hideterms.com is live, serves correct installer per visitor OS, updates automatically on release. *(Met except the hostname: the deployed site resolves v0.1.0's four artifacts live from the GitHub API — verified end-to-end via headless Chrome against the running pod. Public hostname blocks only on the owner's Cloudflare Tunnel route.)*
 
 ---
 
