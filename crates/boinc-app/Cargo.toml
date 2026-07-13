@@ -1,0 +1,12 @@
+[package]
+name = "boinc-app"
+description = "Tray application with Floem UI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+boinc-core.workspace = true
+
+[lints]
+workspace = true

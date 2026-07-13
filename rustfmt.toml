@@ -1,0 +1,4 @@
+# Default rustfmt style. This file pins the edition for editors that invoke
+# rustfmt directly instead of through `cargo fmt`.
+edition = "2024"
+style_edition = "2024"

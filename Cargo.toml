@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/boinc-core",
+    "crates/boinc-cli",
+    "crates/boinc-app",
+    "crates/boinc-integration",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+
+[workspace.dependencies]
+boinc-core = { path = "crates/boinc-core" }
+boinc-integration = { path = "crates/boinc-integration" }
+
+[workspace.lints.rust]
+unsafe_code = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+unwrap_used = "warn"

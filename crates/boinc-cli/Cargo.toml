@@ -1,0 +1,16 @@
+[package]
+name = "boinc-cli"
+description = "Command-line interface; also the target invoked by OS context menus"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "boinc"
+path = "src/main.rs"
+
+[dependencies]
+boinc-core.workspace = true
+
+[lints]
+workspace = true

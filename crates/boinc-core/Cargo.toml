@@ -1,0 +1,11 @@
+[package]
+name = "boinc-core"
+description = "Core conversion engine: converter trait, registry, pipeline"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true
