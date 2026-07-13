@@ -41,11 +41,18 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Install WiX toolset
-        run: choco install wixtoolset --no-progress -y
+        run: |
+          choco install wixtoolset --no-progress -y
+          # choco edits the machine PATH; propagate it to following steps.
+          echo "C:\Program Files (x86)\WiX Toolset v3.14\bin" >> $env:GITHUB_PATH
       - name: Install cargo-wix
         run: cargo install cargo-wix --locked
+      - name: Build release binaries
+        # Both binaries: the MSI packages boinc.exe (CLI) and boinc-app.exe,
+        # but `cargo wix -p boinc-app` alone would only build boinc-app.
+        run: cargo build --release -p boinc-app -p boinc-cli
       - name: Build MSI
-        run: cargo wix -p boinc-app --nocapture --include wix/main.wxs --output dist/
+        run: cargo wix -p boinc-app --no-build --nocapture --include wix/main.wxs --output dist/
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
