@@ -49,6 +49,21 @@ fn main() {
     let settings = Arc::new(Mutex::new(Settings::load()));
     let paused = Arc::new(AtomicBool::new(false));
 
+    // First run: best-effort context-menu integration (idempotent; skipped
+    // once a manifest exists). Lets installers stay free of post-install
+    // hooks on every platform.
+    if boinc_integration::status().is_empty() {
+        if let Some(cli) = sibling_cli() {
+            match boinc_integration::install(&registry, &cli) {
+                Ok(report) => eprintln!(
+                    "boinc: installed {} context-menu hook(s)",
+                    report.created.len()
+                ),
+                Err(err) => eprintln!("boinc: context-menu integration failed: {err}"),
+            }
+        }
+    }
+
     let (ui_tx, ui_rx) = crossbeam_channel::unbounded::<UiMsg>();
     let (worker_tx, worker_rx) = std::sync::mpsc::channel();
 
@@ -95,6 +110,14 @@ fn main() {
             Some(WindowConfig::default().size((520.0, 480.0)).title("Boinc")),
         )
         .run();
+}
+
+/// The `boinc` CLI installed next to this binary, if any.
+fn sibling_cli() -> Option<PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    let name = if cfg!(windows) { "boinc.exe" } else { "boinc" };
+    let cli = exe.parent()?.join(name);
+    cli.is_file().then_some(cli)
 }
 
 fn absolute(path: PathBuf) -> PathBuf {

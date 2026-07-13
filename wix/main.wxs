@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<!--
+  Windows installer (WiX 3), built in CI with `cargo wix -p boinc-app`.
+  Per-user install, no admin required. Installs both binaries and a Start
+  Menu shortcut; context menus are written by the app itself on first run
+  (see boinc-app first-run integration), so no custom actions are needed.
+-->
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+    <Product
+        Id='*'
+        Name='Boinc'
+        UpgradeCode='f0dc122a-56fd-4385-bd15-d072c87b705f'
+        Manufacturer='Bart Roelant'
+        Language='1033'
+        Codepage='1252'
+        Version='$(var.Version)'>
+
+        <Package
+            Keywords='Installer'
+            Description='Boinc file converter'
+            Manufacturer='Bart Roelant'
+            InstallerVersion='450'
+            Languages='1033'
+            Compressed='yes'
+            InstallScope='perUser'
+            SummaryCodepage='1252' />
+
+        <MajorUpgrade AllowSameVersionUpgrades='yes' DowngradeErrorMessage='A newer version of Boinc is already installed.' />
+        <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' />
+
+        <Directory Id='TARGETDIR' Name='SourceDir'>
+            <Directory Id='LocalAppDataFolder'>
+                <Directory Id='APPLICATIONFOLDER' Name='Boinc'>
+                    <Component Id='BoincCli' Guid='6a1f2b3c-4d5e-4f60-8a9b-0c1d2e3f4a5b'>
+                        <File
+                            Id='BoincCliExe'
+                            Name='boinc.exe'
+                            Source='$(var.CargoTargetBinDir)\boinc.exe'
+                            KeyPath='yes' />
+                        <RemoveFolder Id='RemoveAppFolder' On='uninstall' />
+                        <RegistryValue
+                            Root='HKCU'
+                            Key='Software\Boinc'
+                            Name='CliInstalled'
+                            Type='integer'
+                            Value='1' />
+                    </Component>
+                    <Component Id='BoincApp' Guid='7b2a3c4d-5e6f-4071-9bac-1d2e3f4a5b6c'>
+                        <File
+                            Id='BoincAppExe'
+                            Name='boinc-app.exe'
+                            Source='$(var.CargoTargetBinDir)\boinc-app.exe'
+                            KeyPath='yes' />
+                        <RegistryValue
+                            Root='HKCU'
+                            Key='Software\Boinc'
+                            Name='AppInstalled'
+                            Type='integer'
+                            Value='1' />
+                    </Component>
+                </Directory>
+            </Directory>
+            <Directory Id='ProgramMenuFolder'>
+                <Component Id='StartMenuShortcut' Guid='8c3b4d5e-6f70-4182-acbd-2e3f4a5b6c7d'>
+                    <Shortcut
+                        Id='BoincShortcut'
+                        Name='Boinc'
+                        Description='Boinc file converter'
+                        Target='[APPLICATIONFOLDER]boinc-app.exe'
+                        WorkingDirectory='APPLICATIONFOLDER' />
+                    <RegistryValue
+                        Root='HKCU'
+                        Key='Software\Boinc'
+                        Name='ShortcutInstalled'
+                        Type='integer'
+                        Value='1'
+                        KeyPath='yes' />
+                </Component>
+            </Directory>
+        </Directory>
+
+        <Feature Id='MainFeature' Title='Boinc' Level='1'>
+            <ComponentRef Id='BoincCli' />
+            <ComponentRef Id='BoincApp' />
+            <ComponentRef Id='StartMenuShortcut' />
+        </Feature>
+    </Product>
+</Wix>

@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux:
+    name: Linux packages (deb, rpm)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libxkbcommon-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install packaging tools
+        run: cargo install cargo-deb cargo-generate-rpm --locked
+      - name: Build release binaries
+        run: cargo build --release -p boinc-app -p boinc-cli
+      - name: Build .deb
+        run: cargo deb -p boinc-app --no-build -o dist/
+      - name: Build .rpm
+        run: cargo generate-rpm -p crates/boinc-app -o dist/
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+
+  windows:
+    name: Windows installer (msi)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install WiX toolset
+        run: choco install wixtoolset --no-progress -y
+      - name: Install cargo-wix
+        run: cargo install cargo-wix --locked
+      - name: Build MSI
+        run: cargo wix -p boinc-app --nocapture --include wix/main.wxs --output dist/
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.msi
+
+  macos:
+    name: macOS disk image (dmg)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build .app and .dmg
+        run: bash scripts/package-macos.sh
+        # Unsigned until an Apple Developer account is wired in (plan.md
+        # risk #3): set APPLE_SIGNING_IDENTITY + signing cert secrets here.
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.dmg

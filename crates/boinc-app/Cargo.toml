@@ -1,9 +1,47 @@
 [package]
 name = "boinc-app"
-description = "Tray application with Floem UI"
+description = "Convert files from one format to another"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+# Linux packages bundle both binaries; built with `cargo deb -p boinc-app`
+# and `cargo generate-rpm -p crates/boinc-app` after a release build.
+[package.metadata.deb]
+name = "boinc"
+maintainer = "Bart Roelant <bart.roelant@gmail.com>"
+copyright = "2026, Bart Roelant"
+extended-description = """\
+Boinc converts files from one format to another (PNG/JPG, and PDF/DOCX \
+when LibreOffice is installed), from the file browser context menu, a \
+tray application, or the command line."""
+section = "utils"
+priority = "optional"
+depends = "libgtk-3-0 (>= 3.24), libc6"
+recommends = "libreoffice-writer"
+assets = [
+    ["target/release/boinc", "usr/bin/", "755"],
+    ["target/release/boinc-app", "usr/bin/", "755"],
+    ["../../packaging/linux/boinc.desktop", "usr/share/applications/", "644"],
+    ["../../assets/boinc.png", "usr/share/icons/hicolor/128x128/apps/", "644"],
+    ["../../LICENSE", "usr/share/doc/boinc/", "644"],
+]
+
+[package.metadata.generate-rpm]
+name = "boinc"
+summary = "Convert files from one format to another"
+assets = [
+    { source = "target/release/boinc", dest = "/usr/bin/boinc", mode = "755" },
+    { source = "target/release/boinc-app", dest = "/usr/bin/boinc-app", mode = "755" },
+    { source = "packaging/linux/boinc.desktop", dest = "/usr/share/applications/boinc.desktop", mode = "644" },
+    { source = "assets/boinc.png", dest = "/usr/share/icons/hicolor/128x128/apps/boinc.png", mode = "644" },
+    { source = "LICENSE", dest = "/usr/share/doc/boinc/LICENSE", mode = "644" },
+]
+
+[package.metadata.generate-rpm.requires]
+gtk3 = "*"
 
 [dependencies]
 boinc-core.workspace = true

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Boinc
+Comment=Convert files from one format to another
+Exec=boinc-app %F
+Icon=boinc
+Categories=Utility;
+Terminal=false

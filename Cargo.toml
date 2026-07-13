@@ -11,6 +11,9 @@ members = [
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
+license = "MIT"
+repository = "https://github.com/bartbeecoders/boinc"
+description = "Convert files from one format to another, right from the file browser"
 
 [workspace.dependencies]
 boinc-core = { path = "crates/boinc-core" }

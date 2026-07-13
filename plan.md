@@ -100,14 +100,14 @@ Source spec: `Vibecoding/Instructions.md`
 
 **Goal: one-click installers per platform that set up app, CLI, tray autostart, and context menus.**
 
-- [ ] 5.1 **Linux:** `.deb` + `.rpm` (`cargo-deb`, `cargo-generate-rpm`) and AppImage or Flatpak; post-install hook runs `boinc integrate install`
-- [ ] 5.2 **Windows:** MSI or NSIS installer (`cargo-wix` / NSIS) — installs binaries, registry context menus, autostart; proper uninstall
-- [ ] 5.3 **macOS:** `.app` bundle + `.dmg`; code signing & notarization pipeline (needs Apple Developer account — flag early)
-- [ ] 5.4 CI release pipeline: tag → build artifacts for all platforms → attach to GitHub release
-- [ ] 5.5 Auto-update strategy decision (v1 can be "portal announces new version"; defer in-app updater)
-- [ ] 5.6 Versioning + changelog conventions
+- [x] 5.1 **Linux:** `.deb` + `.rpm` via cargo-deb/cargo-generate-rpm — built and inspected locally (binaries, desktop entry, icon, LICENSE; gtk3 dependency, libreoffice recommends). *Deviations:* AppImage/Flatpak deferred; instead of a root post-install hook, the app performs **per-user context-menu integration on first run** (idempotent, manifest-guarded) — cleaner than root-time hooks and shared by all three platforms
+- [x] 5.2 **Windows:** hand-written WiX 3 config (`wix/main.wxs`), per-user scope, both binaries + Start Menu shortcut, MajorUpgrade handling; built in CI via cargo-wix (context menus/autostart via first-run integration, no custom actions). *Not yet run on a real Windows machine*
+- [x] 5.3 **macOS:** `scripts/package-macos.sh` builds Boinc.app + dmg; codesign hook via `APPLE_SIGNING_IDENTITY`. **Unsigned until an Apple Developer account exists — notarization still open (risk #3)**
+- [x] 5.4 CI release pipeline (`release.yml`): `v*` tag → deb/rpm/msi/dmg attached to the GitHub release
+- [x] 5.5 Auto-update: **decided** — no in-app updater in v1; the portal announces new versions (documented in README)
+- [x] 5.6 Versioning + changelog: single workspace version, semver, Keep-a-Changelog `CHANGELOG.md`; release steps in README
 
-**Exit criteria:** fresh VM per OS: download installer from CI artifacts → install → context-menu conversion works → clean uninstall.
+**Exit criteria:** fresh VM per OS: download installer from CI artifacts → install → context-menu conversion works → clean uninstall. *(Package contents verified on Linux; the full fresh-VM pass on all three OSes remains for 7.3, and needs a GitHub remote for the release workflow to run at all.)*
 
 ---
 
