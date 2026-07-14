@@ -10,6 +10,7 @@ repository.workspace = true
 [dependencies]
 boinc-core.workspace = true
 directories.workspace = true
+interprocess.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 

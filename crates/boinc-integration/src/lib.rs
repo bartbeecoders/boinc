@@ -14,6 +14,7 @@ use std::path::Path;
 use boinc_core::{ConverterRegistry, Format};
 
 pub mod entries;
+pub mod ipc;
 mod manifest;
 
 #[cfg(target_os = "linux")]

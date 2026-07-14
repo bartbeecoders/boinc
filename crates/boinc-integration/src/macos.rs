@@ -61,7 +61,7 @@ pub fn launch_agents_dir() -> Option<PathBuf> {
 
 fn shell_script(cli: &Path, entry: &MenuEntry) -> String {
     format!(
-        "for f in \"$@\"; do \"{}\" convert \"$f\" --to {}; done",
+        "for f in \"$@\"; do \"{}\" convert --app \"$f\" --to {}; done",
         cli.display(),
         entry.to.extension()
     )

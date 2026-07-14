@@ -57,9 +57,18 @@ struct ConvertArgs {
     #[arg(required = true)]
     inputs: Vec<PathBuf>,
 
-    /// Target format: png, jpg, pdf, docx
+    /// Target format: png, jpg, pdf, docx, md
     #[arg(long, value_parser = parse_format)]
     to: Format,
+
+    /// Queue the conversion in the running Boinc app (tray progress and
+    /// notifications) instead of converting here; converts in-process when
+    /// the app is not running. Context-menu hooks use this.
+    #[arg(
+        long,
+        conflicts_with_all = ["out", "out_dir", "quality", "background", "json"]
+    )]
+    app: bool,
 
     /// Output file path (single input only; must not exist yet)
     #[arg(long, conflicts_with = "out_dir")]
@@ -103,6 +112,16 @@ fn parse_format(s: &str) -> Result<Format, String> {
             Format::ALL.map(Format::extension).join(", ")
         )
     })
+}
+
+fn absolute(path: &Path) -> PathBuf {
+    if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .map(|cwd| cwd.join(path))
+            .unwrap_or_else(|_| path.to_path_buf())
+    }
 }
 
 fn parse_color(s: &str) -> Result<[u8; 3], String> {
@@ -183,6 +202,27 @@ fn run_convert(registry: &ConverterRegistry, args: &ConvertArgs) -> ExitCode {
     if args.out.is_some() && args.inputs.len() > 1 {
         eprintln!("error: --out requires a single input; use --out-dir for batches");
         return ExitCode::from(2);
+    }
+
+    // Hand off to a running app instance so the conversion shows up in its
+    // queue (tray spinner, notifications). Paths are absolutized because the
+    // app resolves them against its own working directory.
+    if args.app {
+        let msgs: Vec<boinc_integration::ipc::IpcMsg> = args
+            .inputs
+            .iter()
+            .map(|input| boinc_integration::ipc::IpcMsg::Convert {
+                input: absolute(input),
+                to: args.to.extension().to_string(),
+            })
+            .collect();
+        if boinc_integration::ipc::try_forward(&msgs) {
+            for input in &args.inputs {
+                println!("{} -> queued in the Boinc app", input.display());
+            }
+            return ExitCode::SUCCESS;
+        }
+        // No app running: fall through and convert here.
     }
 
     let reporter = if args.json {

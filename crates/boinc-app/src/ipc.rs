@@ -1,65 +1,23 @@
-//! Single-instance guard and local IPC.
+//! Single-instance guard and local IPC (server side).
 //!
-//! The first instance listens on a local socket; later instances (and, in
-//! Phase 4, context-menu invocations) forward their arguments as JSON lines
-//! and exit. Messages: `{"cmd":"open"}`, `{"cmd":"pick","input":"/f.png"}`,
-//! `{"cmd":"convert","input":"/f.png","to":"jpg"}`.
+//! The first instance listens on a local socket; later instances and
+//! context-menu invocations (`boinc convert --app`) forward their arguments
+//! as JSON lines and exit. The socket name and message format live in
+//! `boinc_integration::ipc`, shared with the CLI.
 
-use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
+use std::io::{BufRead, BufReader};
 use std::sync::mpsc::Sender;
 
 use boinc_core::Format;
-use interprocess::local_socket::prelude::*;
-use interprocess::local_socket::{
-    GenericFilePath, GenericNamespaced, ListenerOptions, Name, Stream,
-};
-use serde::{Deserialize, Serialize};
+pub use boinc_integration::ipc::IpcMsg;
+use boinc_integration::ipc::ListenerExt as _;
+pub use boinc_integration::ipc::try_forward;
 
 use crate::state::{UiMsg, WorkerCmd};
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "cmd", rename_all = "lowercase")]
-pub enum IpcMsg {
-    Open,
-    Pick { input: PathBuf },
-    Convert { input: PathBuf, to: String },
-}
-
-fn socket_name() -> std::io::Result<Name<'static>> {
-    if GenericNamespaced::is_supported() {
-        "boinc.sock".to_ns_name::<GenericNamespaced>()
-    } else {
-        let path = std::env::temp_dir().join("boinc.sock");
-        let leaked: &'static str = Box::leak(path.to_string_lossy().into_owned().into_boxed_str());
-        leaked.to_fs_name::<GenericFilePath>()
-    }
-}
-
-/// Try to hand `msgs` to an already-running instance. Returns `true` when a
-/// running instance accepted them (the caller should exit).
-pub fn try_forward(msgs: &[IpcMsg]) -> bool {
-    let Ok(name) = socket_name() else {
-        return false;
-    };
-    let Ok(mut conn) = Stream::connect(name) else {
-        return false;
-    };
-    for msg in msgs {
-        let Ok(mut line) = serde_json::to_string(msg) else {
-            continue;
-        };
-        line.push('\n');
-        if conn.write_all(line.as_bytes()).is_err() {
-            return false;
-        }
-    }
-    true
-}
-
 /// Listen for messages from later instances and dispatch them.
 pub fn spawn_server(ui_tx: crossbeam_channel::Sender<UiMsg>, worker_tx: Sender<WorkerCmd>) {
-    let listener = match bind() {
+    let listener = match boinc_integration::ipc::bind() {
         Ok(listener) => listener,
         Err(err) => {
             eprintln!("boinc: IPC unavailable ({err}); single-instance guard disabled");
@@ -81,11 +39,6 @@ pub fn spawn_server(ui_tx: crossbeam_channel::Sender<UiMsg>, worker_tx: Sender<W
             }
         })
         .expect("IPC thread can be spawned");
-}
-
-fn bind() -> std::io::Result<LocalSocketListener> {
-    let name = socket_name()?;
-    ListenerOptions::new().name(name).create_sync()
 }
 
 fn dispatch(msg: IpcMsg, ui_tx: &crossbeam_channel::Sender<UiMsg>, worker_tx: &Sender<WorkerCmd>) {

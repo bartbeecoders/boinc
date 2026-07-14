@@ -48,7 +48,7 @@ pub fn install_menus(
             cmd_key.set_value(
                 "",
                 &format!(
-                    "\"{}\" convert \"%1\" --to {}",
+                    "\"{}\" convert --app \"%1\" --to {}",
                     cli.display(),
                     entry.to.extension()
                 ),

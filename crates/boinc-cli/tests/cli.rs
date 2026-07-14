@@ -255,3 +255,62 @@ fn list_conversions_json_for_file() {
             .contains(&serde_json::json!("jpg"))
     );
 }
+
+#[test]
+fn convert_app_falls_back_without_running_app() {
+    let dir = tempfile::tempdir().unwrap();
+    let png = dir.path().join("pic.png");
+    write_test_png(&png);
+
+    // An isolated socket name nothing listens on: --app must convert locally.
+    boinc()
+        .env(
+            "BOINC_SOCK",
+            format!("boinc-test-none-{}.sock", std::process::id()),
+        )
+        .args(["convert", "--app", png.to_str().unwrap(), "--to", "jpg"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("pic.jpg"));
+
+    assert!(dir.path().join("pic.jpg").is_file());
+}
+
+#[test]
+fn convert_app_forwards_to_running_app() {
+    use std::io::{BufRead, BufReader};
+
+    let sock = format!("boinc-test-app-{}.sock", std::process::id());
+    let listener = boinc_integration::ipc::bind_named(&sock).unwrap();
+    let server = std::thread::spawn(move || {
+        use boinc_integration::ipc::ListenerExt as _;
+        let conn = listener.incoming().next().unwrap().unwrap();
+        BufReader::new(conn)
+            .lines()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap()
+    });
+
+    let dir = tempfile::tempdir().unwrap();
+    let png = dir.path().join("pic.png");
+    write_test_png(&png);
+
+    boinc()
+        .env("BOINC_SOCK", &sock)
+        .args(["convert", "--app", png.to_str().unwrap(), "--to", "jpg"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("queued in the Boinc app"));
+
+    let lines = server.join().unwrap();
+    assert_eq!(lines.len(), 1, "expected one IPC message: {lines:?}");
+    let msg: serde_json::Value = serde_json::from_str(&lines[0]).unwrap();
+    assert_eq!(msg["cmd"], "convert");
+    assert_eq!(msg["to"], "jpg");
+    assert!(
+        msg["input"].as_str().unwrap().ends_with("pic.png"),
+        "input should be the absolute source path: {msg}"
+    );
+    // The conversion was handed off, not run here.
+    assert!(!dir.path().join("pic.jpg").exists());
+}
