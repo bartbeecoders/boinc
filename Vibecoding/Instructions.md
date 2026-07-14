@@ -42,3 +42,6 @@ make sure that the boinc website points to this release (for downloads)
 
 
 Add the docx to pdf and pdf to docx conversions
+
+
+add conversion from pdf to markdown and back

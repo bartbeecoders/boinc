@@ -5,3 +5,5 @@ Expose the web site on the K3S on port 32087
 
 
 podman login beecodersregistry.azurecr.io
+
+Make a deployment for Fedora Linux Asahi Remix (Apple M1 silicon)
