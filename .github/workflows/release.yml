@@ -12,14 +12,30 @@ env:
 
 jobs:
   linux:
-    name: Linux packages (deb, rpm)
-    runs-on: ubuntu-latest
+    name: Linux packages (deb, rpm, ${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: x86_64
+          # Native aarch64 build (free for public repos); covers Fedora
+          # Asahi Remix and other arm64 distros. Cross-compiling the GTK
+          # stack is not worth it when native runners exist.
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libxkbcommon-dev libxdo-dev
+        # `rpm` guarantees /usr/lib/rpm/find-requires so cargo-generate-rpm
+        # emits direct soname Requires (Fedora-resolvable) instead of the
+        # noisy ldd-closure fallback.
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libxkbcommon-dev libxdo-dev rpm
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.arch }}
       - name: Install packaging tools
         run: cargo install cargo-deb cargo-generate-rpm --locked
       - name: Build release binaries

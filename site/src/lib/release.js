@@ -33,10 +33,14 @@ export function useLatestRelease() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled || !data || !data.assets) return;
+        // Keys: ".deb", ".rpm" (x86_64), ".deb-aarch64", ".rpm-aarch64"
+        // (arm64 — e.g. Fedora Asahi Remix), ".msi", ".dmg".
         const assets = {};
         for (const asset of data.assets) {
           const m = asset.name.match(/\.(deb|rpm|msi|dmg)$/);
-          if (m) assets[`.${m[1]}`] = asset.browser_download_url;
+          if (!m) continue;
+          const arm = /(_arm64|aarch64)/.test(asset.name);
+          assets[arm ? `.${m[1]}-aarch64` : `.${m[1]}`] = asset.browser_download_url;
         }
         setRelease({ assets, tag: data.tag_name ?? null });
       })

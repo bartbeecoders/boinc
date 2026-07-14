@@ -31,7 +31,7 @@ export default function LinuxSetup() {
         <Cmd>{`sudo apt install ./boinc_*_amd64.deb
 boinc-app   # first launch sets up the right-click menu`}</Cmd>
         <p>
-          For PDF ↔ DOCX conversions, also install LibreOffice:{" "}
+          For PDF ↔ DOCX and Markdown → PDF conversions, also install LibreOffice:{" "}
           <code>sudo apt install libreoffice-writer</code>.
         </p>
       </details>
@@ -42,6 +42,18 @@ boinc-app   # first launch sets up the right-click menu`}</Cmd>
 boinc-app   # first launch sets up the right-click menu`}</Cmd>
         <p>
           LibreOffice for the document conversions: <code>sudo dnf install libreoffice-writer</code>.
+        </p>
+      </details>
+
+      <details>
+        <summary>Fedora Asahi Remix — Apple Silicon (.rpm, aarch64)</summary>
+        <Cmd>{`sudo dnf install ./boinc-*.aarch64.rpm
+boinc-app   # first launch sets up the right-click menu`}</Cmd>
+        <p>
+          Native aarch64 build for Apple M-series Macs running{" "}
+          <a href="https://asahilinux.org/fedora/">Fedora Asahi Remix</a>. The default KDE
+          Plasma spin gets the Dolphin right-click menu out of the box; LibreOffice for the
+          document conversions: <code>sudo dnf install libreoffice-writer</code>.
         </p>
       </details>
 
@@ -61,7 +73,7 @@ sudo install -Dm755 -t /usr/local/bin target/release/boinc target/release/boinc-
 boinc-app   # first launch sets up the right-click menu`}</Cmd>
         <p>
           <code>gtk3</code> is for the tray icon, <code>xdotool</code> provides libxdo. For
-          PDF ↔ DOCX: <code>sudo pacman -S libreoffice-fresh</code>.
+          PDF ↔ DOCX and Markdown → PDF: <code>sudo pacman -S libreoffice-fresh</code>.
         </p>
       </details>
 
@@ -99,7 +111,7 @@ boinc-app   # first launch sets up the right-click menu`}</Cmd>
       <p className="aside">
         Something missing? <code>boinc integrate status</code> lists every installed hook,
         and re-running <code>boinc integrate install</code> refreshes them — do that after
-        installing LibreOffice so the PDF and DOCX entries appear.
+        installing LibreOffice so the PDF, DOCX, and Markdown entries appear.
       </p>
     </section>
   );

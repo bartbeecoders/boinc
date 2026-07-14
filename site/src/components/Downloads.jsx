@@ -3,6 +3,13 @@ import { RELEASES_URL } from "../lib/release.js";
 const CARDS = [
   { os: "linux", title: "Debian / Ubuntu", ext: ".deb", note: "sudo apt install ./boinc_*.deb" },
   { os: "linux", title: "Fedora / openSUSE", ext: ".rpm", note: "sudo dnf install ./boinc-*.rpm" },
+  {
+    os: "linux",
+    title: "Fedora Asahi Remix (Apple Silicon)",
+    ext: ".rpm-aarch64",
+    label: ".rpm (aarch64)",
+    note: "sudo dnf install ./boinc-*.aarch64.rpm",
+  },
   { os: "windows", title: "Windows", ext: ".msi", note: "Run the installer — no admin needed." },
   { os: "mac", title: "macOS", ext: ".dmg", note: "Unsigned for now: right-click → Open once." },
 ];
@@ -21,7 +28,7 @@ export default function Downloads({ os, release }) {
           <div key={card.title} className={`dl-card${os === card.os ? " detected" : ""}`}>
             <h3>{card.title}</h3>
             <a className="btn-secondary" href={release.assets[card.ext] ?? RELEASES_URL}>
-              Download {card.ext}
+              Download {card.label ?? card.ext}
             </a>
             <code>{card.note}</code>
           </div>
