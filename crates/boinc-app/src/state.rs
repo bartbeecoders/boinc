@@ -42,6 +42,10 @@ pub enum UiMsg {
     Jobs(Vec<JobView>),
     /// A file arrived (drop, CLI arg, or IPC): show the target picker.
     Pick(PathBuf),
+    /// A newer release exists: show the update banner.
+    UpdateAvailable(crate::update::UpdateInfo),
+    /// Progress/outcome text for the update banner.
+    UpdateStatus(String),
     OpenWindow,
     Quit,
 }

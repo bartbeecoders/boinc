@@ -14,6 +14,8 @@ pub struct Settings {
     /// Stored preference; actual login-item registration is done by the
     /// integration layer (plan.md Phase 4.5).
     pub launch_at_login: bool,
+    /// Check for a newer release at startup.
+    pub check_updates: bool,
 }
 
 impl Default for Settings {
@@ -22,6 +24,7 @@ impl Default for Settings {
             output_dir: None,
             jpeg_quality: 90,
             launch_at_login: false,
+            check_updates: true,
         }
     }
 }

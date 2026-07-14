@@ -35,8 +35,14 @@ const OPEN_ID: &str = "open";
 const PAUSE_ID: &str = "pause";
 const QUIT_ID: &str = "quit";
 
-const IDLE_TOOLTIP: &str = "Boinc file converter";
-const BUSY_TOOLTIP: &str = "Boinc — converting…";
+fn tooltip(busy: bool) -> String {
+    let version = boinc_core::version();
+    if busy {
+        format!("Boinc v{version} — converting…")
+    } else {
+        format!("Boinc file converter v{version}")
+    }
+}
 
 /// One full spinner revolution takes `SPINNER_STEPS * SPINNER_TICK` (1s).
 const SPINNER_STEPS: u8 = 8;
@@ -79,8 +85,7 @@ impl TrayHandle {
         {
             self.busy.set(busy);
             with_tray(|tray| {
-                let tooltip = if busy { BUSY_TOOLTIP } else { IDLE_TOOLTIP };
-                let _ = tray.set_tooltip(Some(tooltip));
+                let _ = tray.set_tooltip(Some(tooltip(busy)));
             });
             // Going idle needs no action here: the running spin loop notices
             // on its next tick, restores the idle icon, and stops itself.
@@ -140,8 +145,7 @@ pub fn init(paused: Arc<AtomicBool>, ui_tx: crossbeam_channel::Sender<UiMsg>) ->
                                 if next != busy {
                                     busy = next;
                                     phase = 0;
-                                    let tooltip = if busy { BUSY_TOOLTIP } else { IDLE_TOOLTIP };
-                                    let _ = tray.set_tooltip(Some(tooltip));
+                                    let _ = tray.set_tooltip(Some(tooltip(busy)));
                                     if !busy {
                                         set_frame(&tray, None);
                                     }
@@ -199,7 +203,7 @@ fn build_tray() -> Result<TrayIcon, Box<dyn std::error::Error>> {
     let (rgba, width, height) = icon_rgba(None);
     let tray = TrayIconBuilder::new()
         .with_menu(Box::new(menu))
-        .with_tooltip(IDLE_TOOLTIP)
+        .with_tooltip(tooltip(false))
         .with_icon(Icon::from_rgba(rgba, width, height)?)
         .build()?;
     Ok(tray)

@@ -15,6 +15,7 @@ mod settings;
 mod state;
 mod tray;
 mod ui;
+mod update;
 
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
@@ -76,16 +77,26 @@ fn main() {
     );
     ipc::spawn_server(ui_tx.clone(), worker_tx.clone());
     let tray = tray::init(paused, ui_tx.clone());
+    if settings
+        .lock()
+        .expect("settings mutex not poisoned")
+        .check_updates
+    {
+        update::spawn_check(ui_tx.clone());
+    }
 
     let ctx = AppCtx {
         registry: registry.clone(),
         settings,
         worker_tx,
+        ui_tx: ui_tx.clone(),
     };
 
     // Reactive state shared by all windows, fed from the channel.
     let jobs: RwSignal<Vec<JobView>> = create_rw_signal(Vec::new());
     let picks: RwSignal<Vec<PendingPick>> = create_rw_signal(Vec::new());
+    let update: RwSignal<Option<update::UpdateInfo>> = create_rw_signal(None);
+    let update_status: RwSignal<String> = create_rw_signal(String::new());
     for file in files {
         ui::add_pick(&registry, picks, file);
     }
@@ -104,6 +115,8 @@ fn main() {
                 jobs.set(list);
             }
             UiMsg::Pick(path) => ui::add_pick(&registry, picks, path),
+            UiMsg::UpdateAvailable(info) => update.set(Some(info)),
+            UiMsg::UpdateStatus(text) => update_status.set(text),
             UiMsg::OpenWindow => {
                 // v1: the main window is always open while the app runs (see
                 // tray.rs on Floem's last-window-closed behavior).
@@ -114,7 +127,7 @@ fn main() {
 
     Application::new()
         .window(
-            move |_| ui::main_view(ctx, jobs, picks),
+            move |_| ui::main_view(ctx, jobs, picks, update, update_status),
             Some(WindowConfig::default().size((520.0, 480.0)).title("Boinc")),
         )
         .run();

@@ -140,7 +140,7 @@ fn snapshot(ui_tx: &crossbeam_channel::Sender<UiMsg>, jobs: &[JobView]) {
     let _ = ui_tx.send(UiMsg::Jobs(jobs.to_vec()));
 }
 
-fn notify(summary: &str, body: &str) {
+pub(crate) fn notify(summary: &str, body: &str) {
     let result = notify_rust::Notification::new()
         .appname("Boinc")
         .summary(summary)

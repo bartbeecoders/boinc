@@ -10,18 +10,21 @@ use floem::event::{Event, EventListener};
 use floem::peniko::Color;
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate, create_rw_signal};
 use floem::views::{
-    Decorators, button, container, dyn_stack, empty, h_stack, label, scroll, text_input, v_stack,
+    Decorators, button, container, dyn_container, dyn_stack, empty, h_stack, label, scroll,
+    text_input, v_stack,
 };
 use floem::{IntoView, new_window, window::WindowConfig};
 
 use crate::settings::Settings;
-use crate::state::{JobStatus, JobView, PendingPick, WorkerCmd};
+use crate::state::{JobStatus, JobView, PendingPick, UiMsg, WorkerCmd};
+use crate::update::UpdateInfo;
 
 /// Everything the views need; cheap to clone.
 pub struct AppCtx {
     pub registry: Arc<ConverterRegistry>,
     pub settings: Arc<Mutex<Settings>>,
     pub worker_tx: Sender<WorkerCmd>,
+    pub ui_tx: crossbeam_channel::Sender<UiMsg>,
 }
 
 impl Clone for AppCtx {
@@ -30,6 +33,7 @@ impl Clone for AppCtx {
             registry: self.registry.clone(),
             settings: self.settings.clone(),
             worker_tx: self.worker_tx.clone(),
+            ui_tx: self.ui_tx.clone(),
         }
     }
 }
@@ -81,6 +85,8 @@ pub fn main_view(
     ctx: AppCtx,
     jobs: RwSignal<Vec<JobView>>,
     picks: RwSignal<Vec<PendingPick>>,
+    update: RwSignal<Option<UpdateInfo>>,
+    update_status: RwSignal<String>,
 ) -> impl IntoView {
     let drop_ctx = ctx.clone();
 
@@ -88,10 +94,24 @@ pub fn main_view(
         let ctx = ctx.clone();
         h_stack((
             label(|| "Boinc").style(|s| s.font_size(20.0).font_bold()),
+            label(|| format!("v{}", boinc_core::version()))
+                .style(|s| s.color(Color::rgb8(0x90, 0x90, 0x90)).margin_left(6.0)),
             empty().style(|s| s.flex_grow(1.0_f32)),
             button("Settings").action(move || open_settings(ctx.clone())),
         ))
         .style(|s| s.items_center().width_full())
+    };
+
+    let update_banner = {
+        let ctx = ctx.clone();
+        dyn_container(
+            move || update.get(),
+            move |info| match info {
+                Some(info) => update_banner(ctx.clone(), info, update_status).into_any(),
+                None => empty().into_any(),
+            },
+        )
+        .style(|s| s.width_full())
     };
 
     let drop_zone = container(
@@ -127,7 +147,7 @@ pub fn main_view(
     )
     .style(|s| s.width_full().flex_grow(1.0_f32));
 
-    v_stack((header, drop_zone, picks_list, jobs_list))
+    v_stack((header, update_banner, drop_zone, picks_list, jobs_list))
         .style(|s| {
             s.flex_col()
                 .width_full()
@@ -140,6 +160,30 @@ pub fn main_view(
                 add_pick(&drop_ctx.registry, picks, e.path.clone());
             }
         })
+}
+
+/// "vX.Y.Z available — Install update", with progress text once clicked.
+fn update_banner(ctx: AppCtx, info: UpdateInfo, status: RwSignal<String>) -> impl IntoView {
+    let version = info.version.clone();
+    let install = button("Install update").action(move || {
+        status.set("Starting…".into());
+        crate::update::spawn_install(info.clone(), ctx.ui_tx.clone());
+    });
+
+    h_stack((
+        label(move || format!("Boinc v{version} is available")).style(|s| s.font_bold()),
+        label(move || status.get()).style(|s| s.color(Color::rgb8(0x50, 0x50, 0x50))),
+        empty().style(|s| s.flex_grow(1.0_f32)),
+        install,
+    ))
+    .style(|s| {
+        s.items_center()
+            .width_full()
+            .gap(8.0)
+            .padding(8.0)
+            .border_radius(8.0)
+            .background(Color::rgb8(0xe8, 0xf0, 0xfe))
+    })
 }
 
 fn pick_row(ctx: AppCtx, picks: RwSignal<Vec<PendingPick>>, pick: PendingPick) -> impl IntoView {
@@ -245,7 +289,7 @@ fn open_settings(ctx: AppCtx) {
         move |_| settings_view(ctx),
         Some(
             WindowConfig::default()
-                .size((420.0, 260.0))
+                .size((420.0, 290.0))
                 .title("Boinc Settings"),
         ),
     );
@@ -267,6 +311,7 @@ fn settings_view(ctx: AppCtx) -> impl IntoView {
     );
     let quality = create_rw_signal(current.jpeg_quality.to_string());
     let launch = create_rw_signal(current.launch_at_login);
+    let updates = create_rw_signal(current.check_updates);
     let status = create_rw_signal(String::new());
 
     let save = {
@@ -285,6 +330,7 @@ fn settings_view(ctx: AppCtx) -> impl IntoView {
                 output_dir: (!dir.is_empty()).then(|| PathBuf::from(dir)),
                 jpeg_quality: parsed_quality,
                 launch_at_login: launch.get(),
+                check_updates: updates.get(),
             };
             match new_settings.save() {
                 Ok(()) => {
@@ -313,6 +359,14 @@ fn settings_view(ctx: AppCtx) -> impl IntoView {
             }
         })
         .on_click_stop(move |_| launch.update(|b| *b = !*b)),
+        label(move || {
+            if updates.get() {
+                "[x] Check for updates at startup".to_string()
+            } else {
+                "[ ] Check for updates at startup".to_string()
+            }
+        })
+        .on_click_stop(move |_| updates.update(|b| *b = !*b)),
         h_stack((save, label(move || status.get()))).style(|s| s.gap(10.0).items_center()),
     ))
     .style(|s| {
