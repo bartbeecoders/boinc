@@ -33,6 +33,8 @@ use crate::state::{JobStatus, JobView, PendingPick, UiMsg};
 use crate::ui::AppCtx;
 
 fn main() {
+    force_xwayland();
+
     let files: Vec<PathBuf> = std::env::args_os()
         .skip(1)
         .filter(|a| !a.to_string_lossy().starts_with('-'))
@@ -131,6 +133,23 @@ fn main() {
             Some(WindowConfig::default().size((520.0, 480.0)).title("Boinc")),
         )
         .run();
+}
+
+/// Wayland sessions: run under XWayland instead, because Floem 0.2's winit
+/// fork (0.29) never emits `DroppedFile` on its Wayland backend, which would
+/// silently break drag-and-drop into the window. Winit picks Wayland whenever
+/// `WAYLAND_DISPLAY` is set, so drop it — but only when `DISPLAY` offers an
+/// X11 path; otherwise keep the working Wayland window over no window at all.
+#[allow(unsafe_code)] // env mutation is unsafe in edition 2024; single-threaded here
+fn force_xwayland() {
+    #[cfg(target_os = "linux")]
+    {
+        let set = |var: &str| std::env::var_os(var).is_some_and(|v| !v.is_empty());
+        if set("WAYLAND_DISPLAY") && set("DISPLAY") {
+            // SAFETY: called at the top of main, before any threads exist.
+            unsafe { std::env::remove_var("WAYLAND_DISPLAY") };
+        }
+    }
 }
 
 /// The `boinc` CLI installed next to this binary, if any.
