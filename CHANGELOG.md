@@ -11,6 +11,15 @@ artifacts.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-07-14
+
+### Fixed
+- Drag-and-drop into the app window did nothing on Wayland sessions (e.g.
+  Fedora Asahi Remix): the windowing backend only delivers file-drop events
+  on X11, so the app now runs under XWayland when an X11 path is available.
+  Pure Wayland sessions without XWayland keep the Wayland window (drops
+  still unavailable there).
+
 ## [0.3.0] - 2026-07-14
 
 ### Added
