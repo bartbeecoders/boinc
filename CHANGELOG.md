@@ -11,6 +11,18 @@ artifacts.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-14
+
+### Added
+- The app shows its version in the window header and tray tooltip.
+- Update check on startup (disable in Settings): the app asks
+  `boinc.hideterms.com/api/app-version` (a cached proxy of the GitHub
+  releases API) for the latest release and, when newer, shows a notification
+  plus an in-window banner whose button downloads and installs the matching
+  package — `pkexec apt-get/dnf/zypper` for deb/rpm installs, `msiexec` on
+  Windows, the mounted disk image on macOS. Source builds are pointed at the
+  releases page instead.
+
 ## [0.2.0] - 2026-07-14
 
 ### Added
