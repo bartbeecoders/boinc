@@ -2,4 +2,5 @@
 //! registration line in `ConverterRegistry::with_defaults`.
 
 pub mod libreoffice;
+pub mod markdown;
 pub mod raster;

@@ -102,6 +102,15 @@ export default function App() {
                 it can't do.
               </p>
             </div>
+            <div className="format-card">
+              <div className="pair">
+                <code>PDF</code><span className="arrows">⇄</span><code>MD</code>
+              </div>
+              <p>
+                PDF → Markdown pulls out the text layer with no extra tools needed.
+                Markdown → PDF is typeset by LibreOffice, like the document pair above.
+              </p>
+            </div>
           </div>
           <p className="aside">
             Under the hood every conversion is a plug-in against one small engine, so new

@@ -16,9 +16,9 @@ const QUESTIONS = [
     q: "Why don't I see PDF → DOCX in my menu?",
     a: (
       <p>
-        Document conversions use LibreOffice as their engine. Install{" "}
+        Conversions that produce PDF or DOCX use LibreOffice as their engine. Install{" "}
         <a href="https://www.libreoffice.org/">LibreOffice</a>, open Boinc once, and the
-        entries appear.
+        entries appear. (PDF → Markdown needs no extra tools.)
       </p>
     ),
   },

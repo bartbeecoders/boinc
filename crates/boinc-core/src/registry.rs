@@ -31,6 +31,8 @@ impl ConverterRegistry {
         registry.register(Arc::new(
             converters::libreoffice::LibreOfficeConverter::pdf_to_docx(),
         ));
+        registry.register(Arc::new(converters::markdown::MarkdownToPdf));
+        registry.register(Arc::new(converters::markdown::PdfToMarkdown));
         registry
     }
 
@@ -131,6 +133,8 @@ mod tests {
             (Format::Jpg, Format::Png),
             (Format::Docx, Format::Pdf),
             (Format::Pdf, Format::Docx),
+            (Format::Md, Format::Pdf),
+            (Format::Pdf, Format::Md),
         ] {
             assert!(registry.get(from, to).is_some(), "{from} -> {to} missing");
         }

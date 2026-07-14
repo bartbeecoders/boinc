@@ -93,57 +93,75 @@ impl Converter for LibreOfficeConverter {
         _options: &ConversionOptions,
         progress: &mut dyn FnMut(f32),
     ) -> Result<(), ConversionError> {
-        let soffice = find_soffice().ok_or_else(|| ConversionError::ToolNotFound {
-            tool: "LibreOffice".into(),
-            hint: "install LibreOffice or point BOINC_SOFFICE at the soffice binary".into(),
-        })?;
-
         progress(0.0);
-
-        let input = absolute(input)?;
-
-        // Fresh work dir per run: `--convert-to` always names its result
-        // after the input, so convert into a private dir and move the file to
-        // the requested path afterwards. The throwaway UserInstallation
-        // profile keeps headless runs from fighting an already-open
-        // LibreOffice instance.
-        let work = tempfile::tempdir()?;
-        let profile_dir = work.path().join("profile");
-        std::fs::create_dir(&profile_dir)?;
-
-        let mut cmd = Command::new(&soffice);
-        cmd.arg(format!("-env:UserInstallation={}", file_url(&profile_dir)))
-            .args(["--headless", "--norestore"]);
-        if self.from == Format::Pdf {
-            cmd.arg("--infilter=writer_pdf_import");
-        }
-        cmd.args(["--convert-to", target_filter(self.to), "--outdir"])
-            .arg(work.path())
-            .arg(&input);
-
-        let run = cmd.output().map_err(|e| ConversionError::ToolFailed {
-            tool: "LibreOffice".into(),
-            message: format!("could not run {}: {e}", soffice.display()),
-        })?;
-        progress(0.9);
-
-        let stem = input.file_stem().unwrap_or_default();
-        let produced = work.path().join(stem).with_extension(self.to.extension());
-        if !run.status.success() || !produced.is_file() {
-            return Err(ConversionError::ToolFailed {
-                tool: "LibreOffice".into(),
-                message: format!(
-                    "{}; {}",
-                    run.status,
-                    String::from_utf8_lossy(&run.stderr).trim()
-                ),
-            });
-        }
-
-        move_file(&produced, output)?;
+        let infilter = (self.from == Format::Pdf).then_some("writer_pdf_import");
+        run_soffice(
+            input,
+            output,
+            target_filter(self.to),
+            infilter,
+            self.to.extension(),
+        )?;
         progress(1.0);
         Ok(())
     }
+}
+
+/// Run `soffice --convert-to target` on `input` and move the result to
+/// `output`. Shared by every converter that delegates to LibreOffice.
+pub(crate) fn run_soffice(
+    input: &Path,
+    output: &Path,
+    target: &str,
+    infilter: Option<&str>,
+    to_ext: &str,
+) -> Result<(), ConversionError> {
+    let soffice = find_soffice().ok_or_else(|| ConversionError::ToolNotFound {
+        tool: "LibreOffice".into(),
+        hint: "install LibreOffice or point BOINC_SOFFICE at the soffice binary".into(),
+    })?;
+
+    let input = absolute(input)?;
+
+    // Fresh work dir per run: `--convert-to` always names its result
+    // after the input, so convert into a private dir and move the file to
+    // the requested path afterwards. The throwaway UserInstallation
+    // profile keeps headless runs from fighting an already-open
+    // LibreOffice instance.
+    let work = tempfile::tempdir()?;
+    let profile_dir = work.path().join("profile");
+    std::fs::create_dir(&profile_dir)?;
+
+    let mut cmd = Command::new(&soffice);
+    cmd.arg(format!("-env:UserInstallation={}", file_url(&profile_dir)))
+        .args(["--headless", "--norestore"]);
+    if let Some(filter) = infilter {
+        cmd.arg(format!("--infilter={filter}"));
+    }
+    cmd.args(["--convert-to", target, "--outdir"])
+        .arg(work.path())
+        .arg(&input);
+
+    let run = cmd.output().map_err(|e| ConversionError::ToolFailed {
+        tool: "LibreOffice".into(),
+        message: format!("could not run {}: {e}", soffice.display()),
+    })?;
+
+    let stem = input.file_stem().unwrap_or_default();
+    let produced = work.path().join(stem).with_extension(to_ext);
+    if !run.status.success() || !produced.is_file() {
+        return Err(ConversionError::ToolFailed {
+            tool: "LibreOffice".into(),
+            message: format!(
+                "{}; {}",
+                run.status,
+                String::from_utf8_lossy(&run.stderr).trim()
+            ),
+        });
+    }
+
+    move_file(&produced, output)?;
+    Ok(())
 }
 
 /// LibreOffice's `--convert-to` target: an extension, optionally with an
@@ -156,7 +174,7 @@ fn target_filter(to: Format) -> &'static str {
     }
 }
 
-fn absolute(path: &Path) -> std::io::Result<PathBuf> {
+pub(crate) fn absolute(path: &Path) -> std::io::Result<PathBuf> {
     if path.is_absolute() {
         Ok(path.to_path_buf())
     } else {
@@ -164,8 +182,9 @@ fn absolute(path: &Path) -> std::io::Result<PathBuf> {
     }
 }
 
-/// File URL for `-env:UserInstallation=`; forward slashes work on every OS.
-fn file_url(path: &Path) -> String {
+/// File URL for `-env:UserInstallation=` and HTML base hrefs; forward
+/// slashes work on every OS.
+pub(crate) fn file_url(path: &Path) -> String {
     let p = path.to_string_lossy().replace('\\', "/");
     if p.starts_with('/') {
         format!("file://{p}")

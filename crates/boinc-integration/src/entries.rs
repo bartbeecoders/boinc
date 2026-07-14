@@ -48,6 +48,7 @@ pub fn mime_type(format: Format) -> &'static str {
         Format::Jpg => "image/jpeg",
         Format::Pdf => "application/pdf",
         Format::Docx => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        Format::Md => "text/markdown",
     }
 }
 
@@ -58,6 +59,7 @@ pub fn windows_extensions(format: Format) -> &'static [&'static str] {
         Format::Jpg => &[".jpg", ".jpeg"],
         Format::Pdf => &[".pdf"],
         Format::Docx => &[".docx"],
+        Format::Md => &[".md", ".markdown"],
     }
 }
 
@@ -68,6 +70,7 @@ pub fn uti(format: Format) -> &'static str {
         Format::Jpg => "public.jpeg",
         Format::Pdf => "com.adobe.pdf",
         Format::Docx => "org.openxmlformats.wordprocessingml.document",
+        Format::Md => "net.daringfireball.markdown",
     }
 }
 

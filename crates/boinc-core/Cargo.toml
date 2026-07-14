@@ -9,11 +9,16 @@ repository.workspace = true
 
 [dependencies]
 image.workspace = true
+pdf-extract.workspace = true
+pulldown-cmark.workspace = true
 tempfile.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
 image.workspace = true
+# Kept in lockstep with the lopdf version pdf-extract pins, so tests don't
+# pull a second copy.
+lopdf = "0.42"
 tempfile.workspace = true
 zip = "2"
 

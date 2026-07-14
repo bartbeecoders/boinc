@@ -11,10 +11,17 @@ pub enum Format {
     Jpg,
     Pdf,
     Docx,
+    Md,
 }
 
 impl Format {
-    pub const ALL: [Format; 4] = [Format::Png, Format::Jpg, Format::Pdf, Format::Docx];
+    pub const ALL: [Format; 5] = [
+        Format::Png,
+        Format::Jpg,
+        Format::Pdf,
+        Format::Docx,
+        Format::Md,
+    ];
 
     /// Canonical file extension, lowercase, without the dot.
     pub fn extension(self) -> &'static str {
@@ -23,6 +30,7 @@ impl Format {
             Format::Jpg => "jpg",
             Format::Pdf => "pdf",
             Format::Docx => "docx",
+            Format::Md => "md",
         }
     }
 
@@ -33,6 +41,7 @@ impl Format {
             Format::Jpg => "JPG",
             Format::Pdf => "PDF",
             Format::Docx => "DOCX",
+            Format::Md => "Markdown",
         }
     }
 
@@ -44,6 +53,7 @@ impl Format {
             "jpg" | "jpeg" => Some(Format::Jpg),
             "pdf" => Some(Format::Pdf),
             "docx" => Some(Format::Docx),
+            "md" | "markdown" => Some(Format::Md),
             _ => None,
         }
     }
@@ -65,6 +75,8 @@ enum Sniffed {
     Known(Format),
     /// A ZIP container that does not look like DOCX; the extension decides.
     Zip,
+    /// Plain text — Markdown has no magic bytes; the extension decides.
+    Text,
     Unknown,
 }
 
@@ -81,9 +93,26 @@ fn sniff(bytes: &[u8]) -> Sniffed {
         } else {
             Sniffed::Zip
         }
+    } else if is_plain_text(bytes) {
+        Sniffed::Text
     } else {
         Sniffed::Unknown
     }
+}
+
+/// Printable text: valid UTF-8 with no control bytes beyond whitespace. A
+/// multi-byte sequence cut off at the sniff-window boundary still counts.
+fn is_plain_text(bytes: &[u8]) -> bool {
+    match std::str::from_utf8(bytes) {
+        Ok(_) => {}
+        // error_len() == None means the only defect is a trailing sequence
+        // truncated by the read window, not invalid data.
+        Err(e) if e.error_len().is_none() => {}
+        Err(_) => return false,
+    }
+    !bytes
+        .iter()
+        .any(|&b| b < 0x20 && !matches!(b, b'\t' | b'\n' | b'\r' | 0x0C))
 }
 
 fn contains(haystack: &[u8], needle: &[u8]) -> bool {
@@ -120,6 +149,7 @@ pub fn detect_format(path: &Path) -> Result<Format, ConversionError> {
     match sniff(&buf) {
         Sniffed::Known(format) => Ok(format),
         Sniffed::Zip if by_extension == Some(Format::Docx) => Ok(Format::Docx),
+        Sniffed::Text if by_extension == Some(Format::Md) => Ok(Format::Md),
         _ => Err(ConversionError::UnknownFormat {
             path: path.to_path_buf(),
         }),
@@ -136,6 +166,8 @@ mod tests {
         assert_eq!(Format::from_extension(".PNG"), Some(Format::Png));
         assert_eq!(Format::from_extension("jpeg"), Some(Format::Jpg));
         assert_eq!(Format::from_extension("JPG"), Some(Format::Jpg));
+        assert_eq!(Format::from_extension("md"), Some(Format::Md));
+        assert_eq!(Format::from_extension("markdown"), Some(Format::Md));
         assert_eq!(Format::from_extension("txt"), None);
     }
 
@@ -155,6 +187,15 @@ mod tests {
             Sniffed::Known(Format::Docx)
         ));
         assert!(matches!(sniff(b"PK\x03\x04....other.txt"), Sniffed::Zip));
-        assert!(matches!(sniff(b"hello"), Sniffed::Unknown));
+        assert!(matches!(
+            sniff(b"# Heading\n\nBody *text*.\n"),
+            Sniffed::Text
+        ));
+        assert!(matches!(sniff("héllo".as_bytes()), Sniffed::Text));
+        // A multi-byte character split by the sniff window is still text...
+        assert!(matches!(sniff(&"héllo".as_bytes()[..2]), Sniffed::Text));
+        // ...but invalid UTF-8 or control bytes in the middle are not.
+        assert!(matches!(sniff(&[0x68, 0xFF, 0x69]), Sniffed::Unknown));
+        assert!(matches!(sniff(b"hel\x00lo"), Sniffed::Unknown));
     }
 }
