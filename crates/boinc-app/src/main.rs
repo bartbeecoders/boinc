@@ -28,7 +28,7 @@ use floem::window::WindowConfig;
 
 use crate::ipc::IpcMsg;
 use crate::settings::Settings;
-use crate::state::{JobView, PendingPick, UiMsg};
+use crate::state::{JobStatus, JobView, PendingPick, UiMsg};
 use crate::ui::AppCtx;
 
 fn main() {
@@ -75,7 +75,7 @@ fn main() {
         paused.clone(),
     );
     ipc::spawn_server(ui_tx.clone(), worker_tx.clone());
-    tray::init(paused, ui_tx.clone());
+    let tray = tray::init(paused, ui_tx.clone());
 
     let ctx = AppCtx {
         registry: registry.clone(),
@@ -94,7 +94,15 @@ fn main() {
     create_effect(move |_| {
         let Some(msg) = ui_msg.get() else { return };
         match msg {
-            UiMsg::Jobs(list) => jobs.set(list),
+            UiMsg::Jobs(list) => {
+                // Reflect an active conversion (e.g. a slow LibreOffice
+                // PDF↔DOCX job) in the tray icon.
+                tray.set_busy(
+                    list.iter()
+                        .any(|j| matches!(j.status, JobStatus::Running(_))),
+                );
+                jobs.set(list);
+            }
             UiMsg::Pick(path) => ui::add_pick(&registry, picks, path),
             UiMsg::OpenWindow => {
                 // v1: the main window is always open while the app runs (see
