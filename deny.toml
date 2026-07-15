@@ -28,6 +28,14 @@ ignore = [
     # next floem upgrade.
     "RUSTSEC-2026-0194",
     "RUSTSEC-2026-0195",
+    # Unmaintained transitive deps of vtracer 0.6 (visioncortex): image 0.23
+    # pulls adler via miniz_oxide/tiff; the binary always depends on clap 2
+    # which pulls ansi_term + atty. We only use the library API and cannot
+    # bump these until vtracer drops clap 2 / upgrades image. Revisit on the
+    # next vtracer release.
+    "RUSTSEC-2025-0056", # adler (via image 0.23 → tiff → miniz_oxide)
+    "RUSTSEC-2021-0139", # ansi_term (via clap 2)
+    "RUSTSEC-2024-0375", # atty (via clap 2)
 ]
 
 [licenses]
