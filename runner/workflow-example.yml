@@ -1,0 +1,30 @@
+# Example: pin a job to the VPS self-hosted runner.
+# Copy the `runs-on` line into .github/workflows/*.yml when you are ready —
+# do NOT enable for untrusted fork PRs without understanding the risk
+# (self-hosted runners are not sandboxed like GitHub-hosted VMs).
+#
+# Labels set by install-host.sh: self-hosted, Linux, X64, vps, boinc
+# Labels set by k8s deployment:   self-hosted, Linux, X64, vps, boinc, k8s
+
+name: Self-hosted smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Smoke on VPS runner
+    runs-on: [self-hosted, linux, x64, vps]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Host info
+        run: |
+          uname -a
+          nproc
+          free -h
+          df -h .
+      - name: Toolchain probe
+        run: |
+          command -v rustc && rustc -V || echo "rustc not installed on runner host"
+          command -v cargo && cargo -V || true
+          command -v podman && podman --version || true

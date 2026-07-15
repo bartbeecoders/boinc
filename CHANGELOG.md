@@ -11,6 +11,22 @@ artifacts.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-07-15
+
+### Added
+- GitHub self-hosted runner package under `runner/` (host systemd install
+  recommended, optional K3s manifests, setup docs).
+
+### Changed
+- Cinnamon/Nemo context menus: conversions are grouped under a single
+  **Boinc** submenu (via Nemo 6 `actions-tree.json`) instead of one top-level
+  item per conversion. Re-run `boinc integrate install` to refresh.
+
+### Fixed
+- CI `cargo-deny`: ignore unmaintained transitive crates pulled in by
+  vtracer 0.6 (`adler`, `ansi_term`, `atty`).
+- `cargo fmt` cleanups so CI format checks pass.
+
 ## [0.4.0] - 2026-07-15
 
 ### Added

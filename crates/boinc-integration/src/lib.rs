@@ -77,6 +77,11 @@ pub fn uninstall() -> io::Result<Report> {
             Err(err) => eprintln!("boinc: could not remove {}: {err}", hook.describe()),
         }
     }
+    // Nemo layout is not a simple "we own this file" hook — merge carefully.
+    #[cfg(target_os = "linux")]
+    if let Err(err) = linux::clear_nemo_submenu() {
+        eprintln!("boinc: could not clear Nemo Boinc submenu: {err}");
+    }
     manifest::clear()?;
     Ok(report)
 }
@@ -147,6 +152,7 @@ fn install_platform(
         linux::nautilus_dir().ok_or_else(|| io::Error::other("no home directory available"))?;
     let nemo = linux::nemo_dir().ok_or_else(|| io::Error::other("no home directory available"))?;
 
+    let mut all_entries: Vec<MenuEntry> = Vec::new();
     for (from, entries) in by_from {
         let path = linux::kde_service_menu(&kde, cli, *from, entries)?;
         hooks.push(Hook::File { path });
@@ -155,8 +161,12 @@ fn install_platform(
             hooks.push(Hook::File { path });
             let path = linux::nemo_action(&nemo, cli, entry)?;
             hooks.push(Hook::File { path });
+            all_entries.push(*entry);
         }
     }
+    // Nemo 6+: nest every boinc-*.nemo_action under a single "Boinc" submenu
+    // via actions-tree.json (merges with any existing user layout).
+    linux::sync_nemo_submenu(&all_entries)?;
     Ok(hooks)
 }
 

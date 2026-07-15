@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gha-runner
+  labels:
+    app.kubernetes.io/name: gha-runner
+    app.kubernetes.io/part-of: boinc

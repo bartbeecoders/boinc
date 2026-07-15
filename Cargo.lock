@@ -540,7 +540,7 @@ dependencies = [
 
 [[package]]
 name = "boinc-app"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "boinc-core",
  "boinc-integration",
@@ -556,7 +556,7 @@ dependencies = [
 
 [[package]]
 name = "boinc-cli"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "assert_cmd",
  "boinc-core",
@@ -570,7 +570,7 @@ dependencies = [
 
 [[package]]
 name = "boinc-core"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "image 0.25.10",
  "lopdf",
@@ -584,7 +584,7 @@ dependencies = [
 
 [[package]]
 name = "boinc-integration"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "boinc-core",
  "directories",

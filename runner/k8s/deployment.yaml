@@ -1,0 +1,78 @@
+# Single-replica GitHub Actions runner inside K3s.
+#
+# Image: myoung34/github-runner — thin wrapper around the official agent that
+# auto-registers via ACCESS_TOKEN (PAT) or RUNNER_TOKEN (registration token).
+# Official docs: https://github.com/myoung34/docker-github-actions-runner
+#
+# Caveats vs the host install (recommended for Boinc CI):
+#   - No host docker.sock by default (jobs cannot `docker build` unless you
+#     mount the socket or use DinD — both have security implications).
+#   - No apt packages from the host (libgtk-3-dev etc. are not present).
+#   - Prefer runner/install-host.sh for compiling boinc-app.
+#
+# Apply:
+#   kubectl apply -f namespace.yaml
+#   kubectl apply -f secret.yaml          # from secret.example.yaml
+#   kubectl apply -f deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gha-runner
+  namespace: gha-runner
+  labels:
+    app: gha-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gha-runner
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: gha-runner
+    spec:
+      # Avoid scheduling next to heavy workloads if you add more nodes later.
+      restartPolicy: Always
+      containers:
+        - name: runner
+          image: docker.io/myoung34/github-runner:latest
+          imagePullPolicy: Always
+          env:
+            - name: REPO_URL
+              value: "https://github.com/bartbeecoders/boinc"
+            - name: RUNNER_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: RUNNER_SCOPE
+              value: "repo"
+            - name: LABELS
+              value: "vps,boinc,k8s"
+            - name: EPHEMERAL
+              value: "false"
+            # PAT that can create registration tokens (see secret.example.yaml).
+            - name: ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gha-runner
+                  key: github_token
+            - name: DISABLE_AUTO_UPDATE
+              value: "true"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          # Runner writes work dirs under /actions-runner; keep emptyDir so a
+          # pod restart does not strand in-progress work across nodes (single
+          # node VPS: fine either way).
+          volumeMounts:
+            - name: work
+              mountPath: /actions-runner/_work
+      volumes:
+        - name: work
+          emptyDir: {}

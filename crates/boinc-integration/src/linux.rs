@@ -11,15 +11,27 @@
 //! files fail gracefully with a notify-send message.
 //!
 //! Nemo (Cinnamon): one `.nemo_action` per conversion under
-//! `$XDG_DATA_HOME/nemo/actions/`, MIME-scoped via `Mimetypes=`. Nemo has no
-//! submenu grouping, so entries appear as "Convert to JPG (Boinc)" directly
-//! in the context menu. Nemo watches the directory — no restart needed.
+//! `$XDG_DATA_HOME/nemo/actions/`, MIME-scoped via `Mimetypes=`. Nemo 6+
+//! groups them under a **Boinc** submenu via
+//! `$XDG_CONFIG_HOME/nemo/actions-tree.json` (the same layout file the
+//! "Action layout editor" writes). Nemo watches both paths — usually no
+//! restart needed; if the submenu does not appear, `nemo --quit` once.
 
 use std::io::Write as _;
 use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
 
+use serde::{Deserialize, Serialize};
+
 use crate::entries::{MenuEntry, mime_type};
+
+/// Filename of the Nemo action for one conversion (also the layout UUID).
+pub fn nemo_action_filename(entry: &MenuEntry) -> String {
+    format!("boinc-{}.nemo_action", entry.id())
+}
+
+/// Stable UUID / label for our Nemo submenu in `actions-tree.json`.
+const NEMO_SUBMENU_UUID: &str = "Boinc";
 
 /// Grouped entries → one KDE service-menu file per source format.
 pub fn kde_service_menu(
@@ -82,11 +94,14 @@ pub fn nautilus_script(dir: &Path, cli: &Path, entry: &MenuEntry) -> std::io::Re
 }
 
 /// One Nemo action per conversion, batch-capable via `%F`.
+///
+/// The label is just "Convert to …" — the parent **Boinc** submenu is provided
+/// by [`sync_nemo_submenu`], not by stuffing "(Boinc)" into every name.
 pub fn nemo_action(dir: &Path, cli: &Path, entry: &MenuEntry) -> std::io::Result<PathBuf> {
     let body = format!(
         "[Nemo Action]\n\
          Active=true\n\
-         Name={label} (Boinc)\n\
+         Name={label}\n\
          Comment=Convert the selected file(s) to {to} with Boinc\n\
          Exec=\"{cli}\" convert --app --to {to_ext} %F\n\
          Icon-Name=document-export\n\
@@ -100,9 +115,148 @@ pub fn nemo_action(dir: &Path, cli: &Path, entry: &MenuEntry) -> std::io::Result
     );
 
     std::fs::create_dir_all(dir)?;
-    let path = dir.join(format!("boinc-{}.nemo_action", entry.id()));
+    let path = dir.join(nemo_action_filename(entry));
     std::fs::write(&path, body)?;
     Ok(path)
+}
+
+// ---------------------------------------------------------------------------
+// Nemo action layout (`actions-tree.json`) — groups our actions under "Boinc"
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct NemoLayout {
+    toplevel: Vec<NemoLayoutNode>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct NemoLayoutNode {
+    uuid: String,
+    #[serde(rename = "type")]
+    node_type: String,
+    #[serde(
+        rename = "user-label",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    user_label: Option<String>,
+    #[serde(rename = "user-icon", default, skip_serializing_if = "Option::is_none")]
+    user_icon: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    accelerator: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    children: Option<Vec<NemoLayoutNode>>,
+}
+
+fn is_boinc_action_uuid(uuid: &str) -> bool {
+    uuid.starts_with("boinc-") && uuid.ends_with(".nemo_action")
+}
+
+fn is_boinc_submenu(node: &NemoLayoutNode) -> bool {
+    node.node_type == "submenu"
+        && (node.uuid == NEMO_SUBMENU_UUID || node.user_label.as_deref() == Some(NEMO_SUBMENU_UUID))
+}
+
+/// Drop any previous Boinc submenu or loose `boinc-*.nemo_action` nodes.
+fn strip_boinc_nodes(nodes: Vec<NemoLayoutNode>) -> Vec<NemoLayoutNode> {
+    nodes
+        .into_iter()
+        .filter_map(|mut node| {
+            if is_boinc_submenu(&node) || is_boinc_action_uuid(&node.uuid) {
+                return None;
+            }
+            if let Some(children) = node.children.take() {
+                let kept = strip_boinc_nodes(children);
+                node.children = if kept.is_empty() { None } else { Some(kept) };
+            }
+            Some(node)
+        })
+        .collect()
+}
+
+fn load_nemo_layout(path: &Path) -> NemoLayout {
+    match std::fs::read_to_string(path) {
+        Ok(text) => serde_json::from_str(&text).unwrap_or(NemoLayout {
+            toplevel: Vec::new(),
+        }),
+        Err(_) => NemoLayout {
+            toplevel: Vec::new(),
+        },
+    }
+}
+
+fn write_nemo_layout(path: &Path, layout: &NemoLayout) -> std::io::Result<()> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let body = serde_json::to_string_pretty(layout)
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err))?;
+    std::fs::write(path, body)
+}
+
+/// Ensure all current Boinc Nemo actions sit under a single **Boinc** submenu.
+/// Merges into any existing user layout without wiping other custom entries.
+pub fn sync_nemo_submenu(entries: &[MenuEntry]) -> std::io::Result<()> {
+    let Some(path) = nemo_layout_path() else {
+        return Ok(());
+    };
+    let mut layout = load_nemo_layout(&path);
+    layout.toplevel = strip_boinc_nodes(layout.toplevel);
+
+    let mut children: Vec<NemoLayoutNode> = entries
+        .iter()
+        .map(|entry| NemoLayoutNode {
+            uuid: nemo_action_filename(entry),
+            node_type: "action".into(),
+            user_label: None,
+            user_icon: None,
+            accelerator: None,
+            children: None,
+        })
+        .collect();
+    // Stable order matches menu_entries (by from, then to).
+    children.sort_by(|a, b| a.uuid.cmp(&b.uuid));
+
+    if !children.is_empty() {
+        layout.toplevel.insert(
+            0,
+            NemoLayoutNode {
+                uuid: NEMO_SUBMENU_UUID.into(),
+                node_type: "submenu".into(),
+                user_label: Some(NEMO_SUBMENU_UUID.into()),
+                user_icon: Some("document-export".into()),
+                accelerator: None,
+                children: Some(children),
+            },
+        );
+    }
+
+    write_nemo_layout(&path, &layout)
+}
+
+/// Remove the Boinc submenu from the Nemo layout (used on uninstall).
+pub fn clear_nemo_submenu() -> std::io::Result<()> {
+    let Some(path) = nemo_layout_path() else {
+        return Ok(());
+    };
+    if !path.exists() {
+        return Ok(());
+    }
+    let mut layout = load_nemo_layout(&path);
+    let before = layout.toplevel.len();
+    layout.toplevel = strip_boinc_nodes(layout.toplevel);
+    if layout.toplevel.is_empty() && before > 0 {
+        // Layout only had our stuff — delete the file so Nemo returns to
+        // its default (flat) action ordering for everything else.
+        match std::fs::remove_file(&path) {
+            Err(err) if err.kind() != std::io::ErrorKind::NotFound => Err(err),
+            _ => Ok(()),
+        }
+    } else if layout.toplevel.is_empty() {
+        Ok(())
+    } else {
+        write_nemo_layout(&path, &layout)
+    }
 }
 
 /// XDG autostart entry for the tray app.
@@ -144,6 +298,11 @@ pub fn nautilus_dir() -> Option<PathBuf> {
 /// `$XDG_DATA_HOME/nemo/actions`
 pub fn nemo_dir() -> Option<PathBuf> {
     directories::BaseDirs::new().map(|b| b.data_dir().join("nemo/actions"))
+}
+
+/// `$XDG_CONFIG_HOME/nemo/actions-tree.json` (Nemo 6+ action layout).
+pub fn nemo_layout_path() -> Option<PathBuf> {
+    directories::BaseDirs::new().map(|b| b.config_dir().join("nemo/actions-tree.json"))
 }
 
 /// `$XDG_CONFIG_HOME/autostart`
@@ -205,10 +364,96 @@ mod tests {
         );
         let body = std::fs::read_to_string(&path).unwrap();
         assert!(body.starts_with("[Nemo Action]\n"));
-        assert!(body.contains("Name=Convert to JPG (Boinc)"));
+        assert!(body.contains("Name=Convert to JPG\n"));
+        assert!(!body.contains("(Boinc)"));
         assert!(body.contains("Exec=\"/usr/bin/boinc\" convert --app --to jpg %F"));
         assert!(body.contains("Mimetypes=image/png;"));
         assert!(body.contains("Selection=NotNone"));
+    }
+
+    #[test]
+    fn nemo_layout_groups_actions_under_boinc_submenu() {
+        let config = tempfile::tempdir().unwrap();
+        // Point directories::BaseDirs at the sandbox via env — set for this
+        // process only for the duration of the test helpers below by writing
+        // the layout path directly instead (unit tests call strip/write with
+        // explicit paths through the public merge helpers).
+        let layout_path = config.path().join("nemo/actions-tree.json");
+
+        // Seed a user layout with an unrelated custom action so we prove
+        // merge (not overwrite).
+        let seed = NemoLayout {
+            toplevel: vec![NemoLayoutNode {
+                uuid: "my-custom.nemo_action".into(),
+                node_type: "action".into(),
+                user_label: None,
+                user_icon: None,
+                accelerator: None,
+                children: None,
+            }],
+        };
+        write_nemo_layout(&layout_path, &seed).unwrap();
+
+        let entries = [
+            MenuEntry {
+                from: Format::Png,
+                to: Format::Jpg,
+            },
+            MenuEntry {
+                from: Format::Png,
+                to: Format::Svg,
+            },
+        ];
+
+        // Simulate sync_nemo_submenu against this path.
+        let mut layout = load_nemo_layout(&layout_path);
+        layout.toplevel = strip_boinc_nodes(layout.toplevel);
+        let children: Vec<_> = entries
+            .iter()
+            .map(|e| NemoLayoutNode {
+                uuid: nemo_action_filename(e),
+                node_type: "action".into(),
+                user_label: None,
+                user_icon: None,
+                accelerator: None,
+                children: None,
+            })
+            .collect();
+        layout.toplevel.insert(
+            0,
+            NemoLayoutNode {
+                uuid: NEMO_SUBMENU_UUID.into(),
+                node_type: "submenu".into(),
+                user_label: Some(NEMO_SUBMENU_UUID.into()),
+                user_icon: Some("document-export".into()),
+                accelerator: None,
+                children: Some(children),
+            },
+        );
+        write_nemo_layout(&layout_path, &layout).unwrap();
+
+        let saved: NemoLayout =
+            serde_json::from_str(&std::fs::read_to_string(&layout_path).unwrap()).unwrap();
+        assert_eq!(saved.toplevel.len(), 2);
+        assert_eq!(saved.toplevel[0].uuid, "Boinc");
+        assert_eq!(saved.toplevel[0].node_type, "submenu");
+        let kids = saved.toplevel[0].children.as_ref().unwrap();
+        assert_eq!(kids.len(), 2);
+        assert!(
+            kids.iter()
+                .any(|k| k.uuid == "boinc-png-to-jpg.nemo_action")
+        );
+        assert!(
+            kids.iter()
+                .any(|k| k.uuid == "boinc-png-to-svg.nemo_action")
+        );
+        assert_eq!(saved.toplevel[1].uuid, "my-custom.nemo_action");
+
+        // Re-sync must not duplicate the Boinc submenu.
+        layout = load_nemo_layout(&layout_path);
+        layout.toplevel = strip_boinc_nodes(layout.toplevel);
+        assert_eq!(layout.toplevel.len(), 1);
+        assert_eq!(layout.toplevel[0].uuid, "my-custom.nemo_action");
     }
 
     #[test]

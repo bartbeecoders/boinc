@@ -1,0 +1,4 @@
+# Local secrets — never commit
+config.env
+k8s/secret.yaml
+*.token

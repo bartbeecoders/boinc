@@ -82,9 +82,10 @@ boinc-app   # first launch sets up the right-click menu`}</Cmd>
       <details>
         <summary>Nemo — Cinnamon (Linux Mint, EndeavourOS Cinnamon)</summary>
         <p>
-          Right-click any convertible file: the entries appear directly in the menu, e.g.{" "}
-          <em>Convert to JPG (Boinc)</em>. Nemo watches its actions folder, so they show up
-          immediately — no restart needed.
+          Right-click a convertible file and open the <em>Boinc</em> submenu — it lists
+          only valid targets (e.g. <em>Convert to JPG</em>, <em>Convert to SVG</em>). Nemo
+          watches its actions folder, so they usually show up immediately; if not, run{" "}
+          <code>nemo --quit</code> once.
         </p>
       </details>
 
