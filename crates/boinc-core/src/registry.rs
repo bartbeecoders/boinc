@@ -145,10 +145,7 @@ mod tests {
             );
             for &to in &Format::RASTERS {
                 if from != to {
-                    assert!(
-                        registry.get(from, to).is_some(),
-                        "{from} -> {to} missing"
-                    );
+                    assert!(registry.get(from, to).is_some(), "{from} -> {to} missing");
                 }
             }
         }

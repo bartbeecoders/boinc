@@ -72,8 +72,7 @@ fn save_raster(
             // background color first.
             let flattened = flatten(img.to_rgba8(), options.background);
             let writer = BufWriter::new(File::create(output)?);
-            let encoder =
-                JpegEncoder::new_with_quality(writer, options.jpeg_quality.clamp(1, 100));
+            let encoder = JpegEncoder::new_with_quality(writer, options.jpeg_quality.clamp(1, 100));
             flattened.write_with_encoder(encoder)?;
         }
         Format::Png => {

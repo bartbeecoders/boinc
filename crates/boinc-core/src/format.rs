@@ -150,9 +150,7 @@ fn sniff(bytes: &[u8]) -> Sniffed {
 /// True when the file looks like an SVG document: optional BOM/whitespace,
 /// optional `<?xml …?>` declaration, then an `<svg` root (case-insensitive).
 fn looks_like_svg(bytes: &[u8]) -> bool {
-    let bytes = bytes
-        .strip_prefix(&[0xEF, 0xBB, 0xBF])
-        .unwrap_or(bytes);
+    let bytes = bytes.strip_prefix(&[0xEF, 0xBB, 0xBF]).unwrap_or(bytes);
     let start = bytes
         .iter()
         .position(|&b| !matches!(b, b' ' | b'\t' | b'\n' | b'\r'))
@@ -258,10 +256,7 @@ mod tests {
             sniff(b"BM\x00\x00\x00\x00"),
             Sniffed::Known(Format::Bmp)
         ));
-        assert!(matches!(
-            sniff(b"GIF89a...."),
-            Sniffed::Known(Format::Gif)
-        ));
+        assert!(matches!(sniff(b"GIF89a...."), Sniffed::Known(Format::Gif)));
         assert!(matches!(
             sniff(b"RIFF\x00\x00\x00\x00WEBP...."),
             Sniffed::Known(Format::WebP)

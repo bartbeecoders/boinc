@@ -204,17 +204,8 @@ fn bmp_gif_webp_round_trip_and_to_svg() {
     write_test_png(&png);
 
     for to in [Format::Bmp, Format::Gif, Format::WebP] {
-        let raster = convert(
-            &registry(),
-            &ConversionRequest::new(&png, to),
-            &mut |_| {},
-        )
-        .unwrap();
-        assert_eq!(
-            detect_format(&raster.output).unwrap(),
-            to,
-            "encode {to}"
-        );
+        let raster = convert(&registry(), &ConversionRequest::new(&png, to), &mut |_| {}).unwrap();
+        assert_eq!(detect_format(&raster.output).unwrap(), to, "encode {to}");
 
         // Back to PNG so dimensions stay checkable without format-specific readers.
         let back = convert(
