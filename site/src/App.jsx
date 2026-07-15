@@ -66,8 +66,9 @@ export default function App() {
             <li>
               <h3>Pick the target format</h3>
               <p>
-                Only valid conversions are offered. A PNG shows <em>Convert to JPG</em>,
-                nothing else.
+                Only valid conversions are offered. A PNG shows targets like{" "}
+                <em>Convert to JPG</em> and <em>Convert to SVG</em> — never a format
+                Boinc can't produce.
               </p>
             </li>
             <li>
@@ -85,11 +86,27 @@ export default function App() {
           <div className="format-grid">
             <div className="format-card">
               <div className="pair">
-                <code>PNG</code><span className="arrows">⇄</span><code>JPG</code>
+                <code>PNG</code><span className="arrows">⇄</span>
+                <code>JPG</code><span className="arrows">⇄</span>
+                <code>BMP</code><span className="arrows">⇄</span>
+                <code>GIF</code><span className="arrows">⇄</span>
+                <code>WebP</code>
               </div>
               <p>
-                Both directions, out of the box. Transparency is flattened onto a background
-                color you choose; JPEG quality is configurable.
+                Any raster format to any other, out of the box. Transparency is flattened onto
+                a background color you choose when writing JPEG; quality is configurable.
+              </p>
+            </div>
+            <div className="format-card">
+              <div className="pair">
+                <code>PNG · JPG · BMP · GIF · WebP</code>
+                <span className="arrows">→</span>
+                <code>SVG</code>
+              </div>
+              <p>
+                Bitmap to vector via{" "}
+                <a href="https://github.com/visioncortex/vtracer">vtracer</a> — runs in-process,
+                no extra tools. Good for logos, icons, and clean line art as well as photos.
               </p>
             </div>
             <div className="format-card">

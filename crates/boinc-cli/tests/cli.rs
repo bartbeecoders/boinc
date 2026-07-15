@@ -175,7 +175,7 @@ fn explicit_out_refuses_to_overwrite() {
 #[test]
 fn unknown_format_is_usage_error() {
     boinc()
-        .args(["convert", "whatever.png", "--to", "gif"])
+        .args(["convert", "whatever.png", "--to", "tiff"])
         .assert()
         .code(2)
         .stderr(predicate::str::contains("unknown format"));

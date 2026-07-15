@@ -46,9 +46,13 @@ pub fn mime_type(format: Format) -> &'static str {
     match format {
         Format::Png => "image/png",
         Format::Jpg => "image/jpeg",
+        Format::Bmp => "image/bmp",
+        Format::Gif => "image/gif",
+        Format::WebP => "image/webp",
         Format::Pdf => "application/pdf",
         Format::Docx => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         Format::Md => "text/markdown",
+        Format::Svg => "image/svg+xml",
     }
 }
 
@@ -57,9 +61,13 @@ pub fn windows_extensions(format: Format) -> &'static [&'static str] {
     match format {
         Format::Png => &[".png"],
         Format::Jpg => &[".jpg", ".jpeg"],
+        Format::Bmp => &[".bmp"],
+        Format::Gif => &[".gif"],
+        Format::WebP => &[".webp"],
         Format::Pdf => &[".pdf"],
         Format::Docx => &[".docx"],
         Format::Md => &[".md", ".markdown"],
+        Format::Svg => &[".svg"],
     }
 }
 
@@ -68,9 +76,13 @@ pub fn uti(format: Format) -> &'static str {
     match format {
         Format::Png => "public.png",
         Format::Jpg => "public.jpeg",
+        Format::Bmp => "com.microsoft.bmp",
+        Format::Gif => "com.compuserve.gif",
+        Format::WebP => "org.webmproject.webp",
         Format::Pdf => "com.adobe.pdf",
         Format::Docx => "org.openxmlformats.wordprocessingml.document",
         Format::Md => "net.daringfireball.markdown",
+        Format::Svg => "public.svg-image",
     }
 }
 

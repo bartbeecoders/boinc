@@ -4,3 +4,4 @@
 pub mod libreoffice;
 pub mod markdown;
 pub mod raster;
+pub mod vector;

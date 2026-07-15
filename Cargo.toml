@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.3.1"
+version = "0.4.0"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
@@ -22,7 +22,7 @@ clap = { version = "4", features = ["derive"] }
 crossbeam-channel = "0.5"
 directories = "6"
 floem = "0.2"
-image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp", "gif", "webp"] }
 interprocess = "2"
 notify-rust = "4"
 pdf-extract = "0.12"
@@ -32,6 +32,7 @@ serde_json = "1"
 tempfile = "3"
 thiserror = "2"
 tray-icon = "0.24"
+vtracer = "0.6"
 
 [workspace.lints.rust]
 unsafe_code = "warn"

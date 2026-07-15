@@ -13,6 +13,7 @@ pdf-extract.workspace = true
 pulldown-cmark.workspace = true
 tempfile.workspace = true
 thiserror.workspace = true
+vtracer.workspace = true
 
 [dev-dependencies]
 image.workspace = true

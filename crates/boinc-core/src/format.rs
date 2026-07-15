@@ -9,28 +9,57 @@ use crate::error::ConversionError;
 pub enum Format {
     Png,
     Jpg,
+    Bmp,
+    Gif,
+    WebP,
     Pdf,
     Docx,
     Md,
+    Svg,
 }
 
 impl Format {
-    pub const ALL: [Format; 5] = [
+    pub const ALL: [Format; 9] = [
         Format::Png,
         Format::Jpg,
+        Format::Bmp,
+        Format::Gif,
+        Format::WebP,
         Format::Pdf,
         Format::Docx,
         Format::Md,
+        Format::Svg,
     ];
+
+    /// Raster (bitmap) formats the `image` crate can open and save.
+    pub const RASTERS: [Format; 5] = [
+        Format::Png,
+        Format::Jpg,
+        Format::Bmp,
+        Format::Gif,
+        Format::WebP,
+    ];
+
+    /// Whether this is a bitmap format (eligible for raster↔raster and →SVG).
+    pub fn is_raster(self) -> bool {
+        matches!(
+            self,
+            Format::Png | Format::Jpg | Format::Bmp | Format::Gif | Format::WebP
+        )
+    }
 
     /// Canonical file extension, lowercase, without the dot.
     pub fn extension(self) -> &'static str {
         match self {
             Format::Png => "png",
             Format::Jpg => "jpg",
+            Format::Bmp => "bmp",
+            Format::Gif => "gif",
+            Format::WebP => "webp",
             Format::Pdf => "pdf",
             Format::Docx => "docx",
             Format::Md => "md",
+            Format::Svg => "svg",
         }
     }
 
@@ -39,9 +68,13 @@ impl Format {
         match self {
             Format::Png => "PNG",
             Format::Jpg => "JPG",
+            Format::Bmp => "BMP",
+            Format::Gif => "GIF",
+            Format::WebP => "WebP",
             Format::Pdf => "PDF",
             Format::Docx => "DOCX",
             Format::Md => "Markdown",
+            Format::Svg => "SVG",
         }
     }
 
@@ -51,9 +84,13 @@ impl Format {
         match ext.trim_start_matches('.').to_ascii_lowercase().as_str() {
             "png" => Some(Format::Png),
             "jpg" | "jpeg" => Some(Format::Jpg),
+            "bmp" => Some(Format::Bmp),
+            "gif" => Some(Format::Gif),
+            "webp" => Some(Format::WebP),
             "pdf" => Some(Format::Pdf),
             "docx" => Some(Format::Docx),
             "md" | "markdown" => Some(Format::Md),
+            "svg" => Some(Format::Svg),
             _ => None,
         }
     }
@@ -85,6 +122,12 @@ fn sniff(bytes: &[u8]) -> Sniffed {
         Sniffed::Known(Format::Png)
     } else if bytes.starts_with(&[0xFF, 0xD8, 0xFF]) {
         Sniffed::Known(Format::Jpg)
+    } else if bytes.starts_with(b"BM") {
+        Sniffed::Known(Format::Bmp)
+    } else if bytes.starts_with(b"GIF87a") || bytes.starts_with(b"GIF89a") {
+        Sniffed::Known(Format::Gif)
+    } else if bytes.len() >= 12 && bytes.starts_with(b"RIFF") && &bytes[8..12] == b"WEBP" {
+        Sniffed::Known(Format::WebP)
     } else if bytes.starts_with(b"%PDF-") {
         Sniffed::Known(Format::Pdf)
     } else if bytes.starts_with(b"PK\x03\x04") {
@@ -93,11 +136,37 @@ fn sniff(bytes: &[u8]) -> Sniffed {
         } else {
             Sniffed::Zip
         }
+    } else if looks_like_svg(bytes) {
+        // SVG is valid UTF-8 text; detect it before the generic text branch
+        // so output of vectorization is recognized as SVG, not Markdown.
+        Sniffed::Known(Format::Svg)
     } else if is_plain_text(bytes) {
         Sniffed::Text
     } else {
         Sniffed::Unknown
     }
+}
+
+/// True when the file looks like an SVG document: optional BOM/whitespace,
+/// optional `<?xml …?>` declaration, then an `<svg` root (case-insensitive).
+fn looks_like_svg(bytes: &[u8]) -> bool {
+    let bytes = bytes
+        .strip_prefix(&[0xEF, 0xBB, 0xBF])
+        .unwrap_or(bytes);
+    let start = bytes
+        .iter()
+        .position(|&b| !matches!(b, b' ' | b'\t' | b'\n' | b'\r'))
+        .unwrap_or(bytes.len());
+    let rest = &bytes[start..];
+    if rest.is_empty() {
+        return false;
+    }
+    let lower: Vec<u8> = rest.iter().map(u8::to_ascii_lowercase).collect();
+    if lower.starts_with(b"<svg") {
+        return true;
+    }
+    // XML-declared documents: require an <svg tag somewhere in the window.
+    lower.starts_with(b"<?xml") && contains(&lower, b"<svg")
 }
 
 /// Printable text: valid UTF-8 with no control bytes beyond whitespace. A
@@ -166,8 +235,12 @@ mod tests {
         assert_eq!(Format::from_extension(".PNG"), Some(Format::Png));
         assert_eq!(Format::from_extension("jpeg"), Some(Format::Jpg));
         assert_eq!(Format::from_extension("JPG"), Some(Format::Jpg));
+        assert_eq!(Format::from_extension("bmp"), Some(Format::Bmp));
+        assert_eq!(Format::from_extension("gif"), Some(Format::Gif));
+        assert_eq!(Format::from_extension("webp"), Some(Format::WebP));
         assert_eq!(Format::from_extension("md"), Some(Format::Md));
         assert_eq!(Format::from_extension("markdown"), Some(Format::Md));
+        assert_eq!(Format::from_extension("svg"), Some(Format::Svg));
         assert_eq!(Format::from_extension("txt"), None);
     }
 
@@ -181,12 +254,37 @@ mod tests {
             sniff(&[0xFF, 0xD8, 0xFF, 0xE0]),
             Sniffed::Known(Format::Jpg)
         ));
+        assert!(matches!(
+            sniff(b"BM\x00\x00\x00\x00"),
+            Sniffed::Known(Format::Bmp)
+        ));
+        assert!(matches!(
+            sniff(b"GIF89a...."),
+            Sniffed::Known(Format::Gif)
+        ));
+        assert!(matches!(
+            sniff(b"RIFF\x00\x00\x00\x00WEBP...."),
+            Sniffed::Known(Format::WebP)
+        ));
+        // Other RIFF containers must not be mistaken for WebP.
+        assert!(matches!(
+            sniff(b"RIFF\x00\x00\x00\x00WAVE...."),
+            Sniffed::Unknown
+        ));
         assert!(matches!(sniff(b"%PDF-1.7\n"), Sniffed::Known(Format::Pdf)));
         assert!(matches!(
             sniff(b"PK\x03\x04....word/document.xml"),
             Sniffed::Known(Format::Docx)
         ));
         assert!(matches!(sniff(b"PK\x03\x04....other.txt"), Sniffed::Zip));
+        assert!(matches!(
+            sniff(b"<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"),
+            Sniffed::Known(Format::Svg)
+        ));
+        assert!(matches!(
+            sniff(b"<?xml version=\"1.0\"?>\n<svg width=\"1\"></svg>"),
+            Sniffed::Known(Format::Svg)
+        ));
         assert!(matches!(
             sniff(b"# Heading\n\nBody *text*.\n"),
             Sniffed::Text

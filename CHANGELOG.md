@@ -11,6 +11,18 @@ artifacts.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-15
+
+### Added
+- BMP, GIF, and WebP as first-class formats: convert among all raster types
+  (PNG, JPG, BMP, GIF, WebP — any ↔ any) and vectorize any of them to SVG via
+  [vtracer](https://github.com/visioncortex/vtracer) (in-process; no external
+  tools). Re-run `boinc integrate install` (or launch the app) to refresh
+  context-menu entries.
+- Sample files under `examples/` for manual/CLI smoke tests (see
+  `examples/README.md` for sources).
+- Portal “What it converts” section updated for the new image and SVG pairs.
+
 ## [0.3.1] - 2026-07-14
 
 ### Fixed

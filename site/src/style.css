@@ -267,9 +267,17 @@ h1, h2, h3 { font-family: var(--display); line-height: 1.15; }
   border-radius: var(--radius);
   padding: 1.3rem 1.4rem;
 }
-.format-card .pair { font-size: 1.25rem; margin-bottom: 0.6rem; }
+.format-card .pair {
+  font-size: 1.1rem;
+  margin-bottom: 0.6rem;
+  line-height: 1.45;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0;
+}
 .format-card .pair code { font-weight: 700; }
-.format-card .arrows { color: var(--orange); margin: 0 0.55rem; font-weight: 700; }
+.format-card .arrows { color: var(--orange); margin: 0 0.45rem; font-weight: 700; }
 .format-card p { color: var(--muted); margin: 0; font-size: 0.98rem; }
 
 .aside { color: var(--muted); font-size: 0.95rem; margin-top: 1.3rem; }

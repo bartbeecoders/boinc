@@ -33,6 +33,16 @@ const QUESTIONS = [
     ),
   },
   {
+    q: "Which image formats can it turn into SVG?",
+    a: (
+      <p>
+        PNG, JPG, BMP, GIF, and WebP — all five bitmap formats Boinc knows. Vectorization
+        uses <a href="https://github.com/visioncortex/vtracer">vtracer</a> and needs no
+        extra install. Those same bitmaps also convert among themselves (any ↔ any).
+      </p>
+    ),
+  },
+  {
     q: "Can I convert many files at once?",
     a: (
       <p>

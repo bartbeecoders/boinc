@@ -93,7 +93,8 @@ boinc-app   # first launch sets up the right-click menu`}</Cmd>
         <p>
           Right-click a file and look for the <em>Boinc</em> submenu (on some Plasma
           versions it sits under <em>Actions</em>). Only valid targets are listed — a PNG
-          shows <em>Convert to JPG</em>, nothing else.
+          shows options like <em>Convert to JPG</em> and <em>Convert to SVG</em>, not
+          document formats.
         </p>
       </details>
 

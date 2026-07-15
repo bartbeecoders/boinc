@@ -23,8 +23,18 @@ impl ConverterRegistry {
     /// new built-in converter must be added (see this crate's README).
     pub fn with_defaults() -> Self {
         let mut registry = Self::new();
-        registry.register(Arc::new(converters::raster::RasterConverter::png_to_jpg()));
-        registry.register(Arc::new(converters::raster::RasterConverter::jpg_to_png()));
+
+        // Every raster pair + every raster → SVG. Driven by Format::RASTERS so
+        // adding a bitmap format is one enum entry plus image-crate features.
+        for &from in &Format::RASTERS {
+            registry.register(Arc::new(converters::vector::BitmapToSvg::new(from)));
+            for &to in &Format::RASTERS {
+                if from != to {
+                    registry.register(Arc::new(converters::raster::RasterConverter::new(from, to)));
+                }
+            }
+        }
+
         registry.register(Arc::new(
             converters::libreoffice::LibreOfficeConverter::docx_to_pdf(),
         ));
@@ -128,9 +138,21 @@ mod tests {
     #[test]
     fn defaults_cover_planned_pairs() {
         let registry = ConverterRegistry::with_defaults();
+        for &from in &Format::RASTERS {
+            assert!(
+                registry.get(from, Format::Svg).is_some(),
+                "{from} -> SVG missing"
+            );
+            for &to in &Format::RASTERS {
+                if from != to {
+                    assert!(
+                        registry.get(from, to).is_some(),
+                        "{from} -> {to} missing"
+                    );
+                }
+            }
+        }
         for (from, to) in [
-            (Format::Png, Format::Jpg),
-            (Format::Jpg, Format::Png),
             (Format::Docx, Format::Pdf),
             (Format::Pdf, Format::Docx),
             (Format::Md, Format::Pdf),

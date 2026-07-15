@@ -147,3 +147,96 @@ fn garbage_input_is_unknown() {
     .unwrap_err();
     assert!(matches!(err, ConversionError::UnknownFormat { .. }));
 }
+
+#[test]
+fn png_to_svg() {
+    let dir = tempfile::tempdir().unwrap();
+    let png = dir.path().join("pic.png");
+    write_test_png(&png);
+
+    let mut updates = Vec::new();
+    let result = convert(
+        &registry(),
+        &ConversionRequest::new(&png, Format::Svg),
+        &mut |p| updates.push(p),
+    )
+    .unwrap();
+    assert_eq!(result.output, dir.path().join("pic.svg"));
+    assert_eq!(detect_format(&result.output).unwrap(), Format::Svg);
+    assert_eq!(updates.first().copied(), Some(0.0));
+    assert_eq!(updates.last().copied(), Some(1.0));
+
+    let body = std::fs::read_to_string(&result.output).unwrap();
+    assert!(
+        body.to_ascii_lowercase().contains("<svg"),
+        "expected SVG markup, got: {body}"
+    );
+}
+
+#[test]
+fn jpg_to_svg() {
+    let dir = tempfile::tempdir().unwrap();
+    let png = dir.path().join("pic.png");
+    write_test_png(&png);
+    let jpg = convert(
+        &registry(),
+        &ConversionRequest::new(&png, Format::Jpg),
+        &mut |_| {},
+    )
+    .unwrap()
+    .output;
+
+    let result = convert(
+        &registry(),
+        &ConversionRequest::new(&jpg, Format::Svg),
+        &mut |_| {},
+    )
+    .unwrap();
+    assert_eq!(detect_format(&result.output).unwrap(), Format::Svg);
+    let body = std::fs::read_to_string(&result.output).unwrap();
+    assert!(body.to_ascii_lowercase().contains("<svg"));
+}
+
+#[test]
+fn bmp_gif_webp_round_trip_and_to_svg() {
+    let dir = tempfile::tempdir().unwrap();
+    let png = dir.path().join("pic.png");
+    write_test_png(&png);
+
+    for to in [Format::Bmp, Format::Gif, Format::WebP] {
+        let raster = convert(
+            &registry(),
+            &ConversionRequest::new(&png, to),
+            &mut |_| {},
+        )
+        .unwrap();
+        assert_eq!(
+            detect_format(&raster.output).unwrap(),
+            to,
+            "encode {to}"
+        );
+
+        // Back to PNG so dimensions stay checkable without format-specific readers.
+        let back = convert(
+            &registry(),
+            &ConversionRequest::new(&raster.output, Format::Png),
+            &mut |_| {},
+        )
+        .unwrap();
+        let img = image::open(&back.output).unwrap();
+        assert_eq!((img.width(), img.height()), (3, 2), "round-trip {to}");
+
+        let svg = convert(
+            &registry(),
+            &ConversionRequest::new(&raster.output, Format::Svg),
+            &mut |_| {},
+        )
+        .unwrap();
+        assert_eq!(detect_format(&svg.output).unwrap(), Format::Svg, "svg {to}");
+        let body = std::fs::read_to_string(&svg.output).unwrap();
+        assert!(
+            body.to_ascii_lowercase().contains("<svg"),
+            "svg markup for {to}: {body}"
+        );
+    }
+}
